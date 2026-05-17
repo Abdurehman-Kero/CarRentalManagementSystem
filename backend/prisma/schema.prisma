@@ -1,0 +1,184 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model Category {
+  CategoryID   Int      @id
+  CategoryName String   @db.VarChar(100)
+  PricePerDay  Decimal  @db.Decimal(10, 2)
+  cars         Car[]
+}
+
+model FuelPolicy {
+  PolicyID        Int      @id
+  Description     String   @db.Text
+  AdditionalCharge Decimal @default(0) @db.Decimal(10, 2)
+  cars            Car[]
+}
+
+model Branch {
+  BranchID     Int      @id
+  BranchName   String   @db.VarChar(150)
+  LocationCity String   @db.VarChar(100)
+  LocationState String  @db.VarChar(100)
+  Phone        String   @db.VarChar(20)
+  employees    Employee[]
+  cars         Car[]
+}
+
+model Employee {
+  EmployeeID Int     @id
+  FullName   String  @db.VarChar(150)
+  Role       String  @db.VarChar(100)
+  Phone      String  @db.VarChar(20)
+  BranchID   Int
+  branch     Branch  @relation(fields: [BranchID], references: [BranchID], onDelete: Restrict)
+}
+
+model Car {
+  CarID        Int       @id
+  LicensePlate String    @unique @db.VarChar(20)
+  Model        String    @db.VarChar(100)
+  Brand        String    @db.VarChar(100)
+  Year         Int
+  Status       String    @db.VarChar(50)
+  CategoryID   Int
+  BranchID     Int
+  PolicyID     Int
+  category     Category  @relation(fields: [CategoryID], references: [CategoryID], onDelete: Restrict)
+  branch       Branch    @relation(fields: [BranchID], references: [BranchID], onDelete: Restrict)
+  fuelPolicy   FuelPolicy @relation(fields: [PolicyID], references: [PolicyID], onDelete: Restrict)
+  maintenance  Maintenance[]
+  carImages    CarImage[]
+  bookings     Booking[]
+  reviews      Review[]
+}
+
+model Maintenance {
+  CarID          Int
+  MaintenanceID  Int
+  ServiceShop    String   @db.VarChar(150)
+  Description    String   @db.Text
+  Cost           Decimal  @db.Decimal(10, 2)
+  CompletionDate DateTime?
+  car            Car      @relation(fields: [CarID], references: [CarID], onDelete: Cascade)
+
+  @@id([CarID, MaintenanceID])
+}
+
+model CarImage {
+  CarID    Int
+  ImageID  Int
+  ImageURL String  @db.Text
+  car      Car     @relation(fields: [CarID], references: [CarID], onDelete: Cascade)
+
+  @@id([CarID, ImageID])
+}
+
+model Customer {
+  CustID           Int     @id
+  FullName         String  @db.VarChar(150)
+  Email            String  @unique @db.VarChar(150)
+  Phone            String  @db.VarChar(20)
+  StreetAddress    String  @db.VarChar(255)
+  City             String  @db.VarChar(100)
+  State            String  @db.VarChar(100)
+  ZipCode          String  @db.VarChar(20)
+  DriverLicenseNo  String  @unique @db.VarChar(50)
+  bookings         Booking[]
+  reviews          Review[]
+}
+
+model Review {
+  ReviewID Int     @id
+  Rating   Int
+  Comment  String? @db.Text
+  Date     DateTime
+  CustID   Int
+  CarID    Int
+  customer Customer @relation(fields: [CustID], references: [CustID], onDelete: Cascade)
+  car      Car      @relation(fields: [CarID], references: [CarID], onDelete: Cascade)
+}
+
+model Booking {
+  BookingID    Int      @id
+  BookingDate  DateTime
+  PickupDate   DateTime
+  ReturnDate   DateTime
+  Status       String   @db.VarChar(50)
+  CustID       Int
+  CarID        Int
+  customer     Customer @relation(fields: [CustID], references: [CustID], onDelete: Restrict)
+  car          Car      @relation(fields: [CarID], references: [CarID], onDelete: Restrict)
+  rental       Rental?
+  payments     Payment[]
+  bookingDrivers BookingDriver[]
+  bookingInsurances BookingInsurance[]
+}
+
+model Rental {
+  RentalID         Int      @id
+  StartDate        DateTime
+  EndDate          DateTime
+  TotalAmount      Decimal  @db.Decimal(10, 2)
+  ActualReturnDate DateTime?
+  BookingID        Int      @unique
+  booking          Booking  @relation(fields: [BookingID], references: [BookingID], onDelete: Cascade)
+}
+
+model PaymentMethod {
+  MethodID   Int     @id
+  MethodType String  @db.VarChar(50)
+  payments   Payment[]
+}
+
+model Payment {
+  BookingID   Int
+  PaymentID   Int
+  Amount      Decimal  @db.Decimal(10, 2)
+  PaymentDate DateTime
+  Status      String   @db.VarChar(50)
+  MethodID    Int
+  booking     Booking  @relation(fields: [BookingID], references: [BookingID], onDelete: Cascade)
+  paymentMethod PaymentMethod @relation(fields: [MethodID], references: [MethodID], onDelete: Restrict)
+
+  @@id([BookingID, PaymentID])
+}
+
+model Driver {
+  DriverID       Int     @id
+  FullName       String  @db.VarChar(150)
+  LicenseNumber  String  @unique @db.VarChar(50)
+  Phone          String  @db.VarChar(20)
+  bookingDrivers BookingDriver[]
+}
+
+model BookingDriver {
+  BookingID Int
+  DriverID  Int
+  booking   Booking @relation(fields: [BookingID], references: [BookingID], onDelete: Cascade)
+  driver    Driver  @relation(fields: [DriverID], references: [DriverID], onDelete: Restrict)
+
+  @@id([BookingID, DriverID])
+}
+
+model Insurance {
+  InsuranceID   Int     @id
+  InsuranceType String  @db.VarChar(100)
+  Cost          Decimal @db.Decimal(10, 2)
+  bookingInsurances BookingInsurance[]
+}
+
+model BookingInsurance {
+  BookingID    Int
+  InsuranceID  Int
+  booking      Booking   @relation(fields: [BookingID], references: [BookingID], onDelete: Cascade)
+  insurance    Insurance @relation(fields: [InsuranceID], references: [InsuranceID], onDelete: Restrict)
+
+  @@id([BookingID, InsuranceID])
+}
