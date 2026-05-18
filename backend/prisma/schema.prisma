@@ -182,3 +182,14 @@ model BookingInsurance {
 
   @@id([BookingID, InsuranceID])
 }
+
+model Admin {
+  AdminID   Int      @id @default(autoincrement())
+  FullName  String   @db.VarChar(150)
+  Email     String   @unique @db.VarChar(150)
+  Password  String   @db.VarChar(255)
+  Role      String   @default("admin") @db.VarChar(50)
+  CreatedAt DateTime @default(now())
+
+  @@map("Admin")
+}
