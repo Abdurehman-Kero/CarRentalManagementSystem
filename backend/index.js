@@ -3,13 +3,18 @@ const cors     = require('cors');
 const dotenv   = require('dotenv');
 dotenv.config();
 
-const prisma = require('./src/lib/prisma');
+// ── DB pool (mysql2 — no Prisma adapter) ─────────────────────────
+const pool = require('./src/lib/db');
 
 // ── Routes ──────────────────────────────────────────────
+const authRoutes     = require('./src/routes/authRoutes');
 const customerRoutes = require('./src/routes/customerRoutes');
 const carRoutes      = require('./src/routes/carRoutes');
 const bookingRoutes  = require('./src/routes/bookingRoutes');
 const rentalRoutes   = require('./src/routes/rentalRoutes');
+
+// ── Auth middleware ──────────────────────────────────────
+const { requireAuth } = require('./src/middleware/auth');
 
 const app  = express();
 const PORT = process.env.PORT || 5000;
@@ -36,12 +41,13 @@ app.use((req, _res, next) => {
 });
 
 // ── Health check ─────────────────────────────────────────
-app.get('/health', (_req, res) => {
-  res.json({
-    status:    'OK',
-    message:   'Car Rental API is running',
-    timestamp: new Date().toISOString(),
-  });
+app.get('/health', async (_req, res) => {
+  try {
+    await pool.query('SELECT 1');
+    res.json({ status: 'OK', message: 'Car Rental API is running', db: 'connected', timestamp: new Date().toISOString() });
+  } catch {
+    res.status(503).json({ status: 'ERROR', message: 'Database unreachable' });
+  }
 });
 
 // ── API info ─────────────────────────────────────────────
@@ -50,6 +56,7 @@ app.get('/api', (_req, res) => {
     message: 'Car Rental Management System API',
     version: '1.0.0',
     endpoints: {
+      auth:      '/api/auth',
       customers: '/api/customers',
       cars:      '/api/cars',
       bookings:  '/api/bookings',
@@ -59,36 +66,24 @@ app.get('/api', (_req, res) => {
 });
 
 // ── Mount routes ─────────────────────────────────────────
-app.use('/api/customers', customerRoutes);
-app.use('/api/cars',      carRoutes);
-app.use('/api/bookings',  bookingRoutes);
-app.use('/api/rentals',   rentalRoutes);
+app.use('/api/auth',      authRoutes);
+app.use('/api/customers', requireAuth, customerRoutes);
+app.use('/api/cars',      requireAuth, carRoutes);
+app.use('/api/bookings',  requireAuth, bookingRoutes);
+app.use('/api/rentals',   requireAuth, rentalRoutes);
 
 // ── 404 ───────────────────────────────────────────────────
 app.use((req, res) => {
-  res.status(404).json({
-    success: false,
-    error:   `Route not found: ${req.method} ${req.originalUrl}`,
-  });
+  res.status(404).json({ success: false, error: `Route not found: ${req.method} ${req.originalUrl}` });
 });
 
 // ── Global error handler ──────────────────────────────────
 app.use((err, _req, res, _next) => {
   console.error('❌ Unhandled error:', err);
-
-  if (err.code === 'P2002') {
-    return res.status(409).json({ success: false, error: 'Duplicate entry — record already exists' });
-  }
-  if (err.code === 'P2025') {
-    return res.status(404).json({ success: false, error: 'Record not found' });
-  }
-  if (err.code === 'P2003') {
-    return res.status(400).json({ success: false, error: 'Foreign key constraint failed' });
-  }
-
+  require('fs').appendFileSync(require('path').join(__dirname, 'error.log'), `[${new Date().toISOString()}] Global Error: ${err.stack || err}\n`);
   res.status(500).json({
     success: false,
-    error:   process.env.NODE_ENV === 'development' ? err.message : 'Internal server error',
+    error: process.env.NODE_ENV === 'development' ? err.message : 'Internal server error',
   });
 });
 
@@ -96,8 +91,12 @@ app.use((err, _req, res, _next) => {
 async function startServer() {
   try {
     // Verify DB connection
-    await prisma.$connect();
-    console.log('✅ Connected to MAMP MySQL database (crms)');
+    await pool.query('SELECT 1');
+    console.log('✅ Connected to MySQL database (carrentalmanagement)');
+
+    // Seed super admin
+    const { seedSuperAdmin } = require('./src/controllers/authController');
+    await seedSuperAdmin();
 
     app.listen(PORT, () => {
       console.log(`🚀 API running at http://localhost:${PORT}`);
@@ -105,18 +104,14 @@ async function startServer() {
     });
   } catch (err) {
     console.error('❌ Failed to connect to database:', err.message);
-    console.error('\n💡 Make sure MAMP is running and MySQL is on port 3306');
+    console.error('\n💡 Make sure MAMP is running and MySQL is on port 8889');
     process.exit(1);
   }
 }
 
-process.on('SIGINT',  async () => { await prisma.$disconnect(); process.exit(0); });
-process.on('SIGTERM', async () => { await prisma.$disconnect(); process.exit(0); });
-process.on('unhandledRejection', (reason) => {
-  console.error('Unhandled rejection:', reason);
-  process.exit(1);
-});
+process.on('SIGINT',  async () => { await pool.end(); process.exit(0); });
+process.on('SIGTERM', async () => { await pool.end(); process.exit(0); });
 
-module.exports = { app, prisma };
+module.exports = { app, pool };
 
 if (require.main === module) startServer();
