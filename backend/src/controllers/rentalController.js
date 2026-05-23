@@ -1,75 +1,84 @@
-// src/controllers/rentalController.js
-const prisma = require('../lib/prisma');
+// src/controllers/rentalController.js — mysql2 direct queries
+const pool = require('../lib/db');
 
-// Get all rentals
+// ── Get all rentals ──────────────────────────────────────────────
 const getAllRentals = async (req, res) => {
   try {
-    const rentals = await prisma.rental.findMany({
-      include: {
-        booking: {
-          include: { customer: true, car: true },
-        },
-      },
-      orderBy: { RentalID: 'desc' },
-    });
+    const [rentals] = await pool.query(`
+      SELECT r.*,
+             b.BookingDate, b.PickupDate, b.ReturnDate, b.Status AS BookingStatus,
+             c.FullName AS CustomerName, c.Email AS CustomerEmail, c.Phone AS CustomerPhone,
+             ca.Brand, ca.Model, ca.LicensePlate
+      FROM Rental r
+      LEFT JOIN Booking  b  ON r.BookingID = b.BookingID
+      LEFT JOIN Customer c  ON b.CustID   = c.CustID
+      LEFT JOIN Car      ca ON b.CarID    = ca.CarID
+      ORDER BY r.RentalID DESC
+    `);
     res.json({ success: true, data: rentals });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
   }
 };
 
-// Get rental by ID
+// ── Get rental by ID ─────────────────────────────────────────────
 const getRentalById = async (req, res) => {
   try {
-    const rental = await prisma.rental.findUnique({
-      where: { RentalID: parseInt(req.params.id) },
-      include: { booking: { include: { customer: true, car: true } } },
-    });
-    if (!rental) return res.status(404).json({ success: false, error: 'Rental not found' });
-    res.json({ success: true, data: rental });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    const [rows] = await pool.query(`
+      SELECT r.*,
+             b.BookingDate, b.PickupDate, b.ReturnDate, b.Status AS BookingStatus,
+             c.FullName AS CustomerName, c.Email AS CustomerEmail,
+             ca.Brand, ca.Model, ca.LicensePlate
+      FROM Rental r
+      LEFT JOIN Booking  b  ON r.BookingID = b.BookingID
+      LEFT JOIN Customer c  ON b.CustID   = c.CustID
+      LEFT JOIN Car      ca ON b.CarID    = ca.CarID
+      WHERE r.RentalID = ?
+    `, [req.params.id]);
+    if (!rows.length)
+      return res.status(404).json({ success: false, error: 'Rental not found' });
+    res.json({ success: true, data: rows[0] });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
   }
 };
 
-// Create rental (checkout)
+// ── Create rental (checkout) ─────────────────────────────────────
 const createRental = async (req, res) => {
   try {
     const { RentalID, StartDate, EndDate, TotalAmount, BookingID } = req.body;
 
-    const existing = await prisma.rental.findUnique({
-      where: { BookingID: parseInt(BookingID) },
-    });
-    if (existing) {
+    const [existing] = await pool.query('SELECT RentalID FROM Rental WHERE BookingID = ?', [BookingID]);
+    if (existing.length)
       return res.status(400).json({ success: false, error: 'Booking already has a rental' });
-    }
 
-    const rental = await prisma.rental.create({
-      data: {
-        RentalID:    parseInt(RentalID),
-        StartDate:   new Date(StartDate),
-        EndDate:     new Date(EndDate),
-        TotalAmount: parseFloat(TotalAmount),
-        BookingID:   parseInt(BookingID),
-      },
-    });
-    res.status(201).json({ success: true, data: rental });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    await pool.query(
+      `INSERT INTO Rental (RentalID, StartDate, EndDate, TotalAmount, BookingID)
+       VALUES (?, ?, ?, ?, ?)`,
+      [parseInt(RentalID), new Date(StartDate), new Date(EndDate), parseFloat(TotalAmount), parseInt(BookingID)]
+    );
+
+    const [rental] = await pool.query('SELECT * FROM Rental WHERE RentalID = ?', [parseInt(RentalID)]);
+    res.status(201).json({ success: true, data: rental[0] });
+  } catch (err) {
+    if (err.code === 'ER_DUP_ENTRY')
+      return res.status(409).json({ success: false, error: 'Rental ID already exists' });
+    res.status(500).json({ success: false, error: err.message });
   }
 };
 
-// Return car
+// ── Return car ───────────────────────────────────────────────────
 const returnCar = async (req, res) => {
   try {
     const { ActualReturnDate } = req.body;
-    const rental = await prisma.rental.update({
-      where: { RentalID: parseInt(req.params.id) },
-      data:  { ActualReturnDate: new Date(ActualReturnDate) },
-    });
-    res.json({ success: true, data: rental });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    await pool.query(
+      'UPDATE Rental SET ActualReturnDate = ? WHERE RentalID = ?',
+      [new Date(ActualReturnDate), req.params.id]
+    );
+    const [rental] = await pool.query('SELECT * FROM Rental WHERE RentalID = ?', [req.params.id]);
+    res.json({ success: true, data: rental[0] });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
   }
 };
 
