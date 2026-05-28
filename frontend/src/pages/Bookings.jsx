@@ -3,12 +3,19 @@ import bookingService from '../services/bookingService';
 import carService from '../services/carService';
 import customerService from '../services/customerService';
 import toast from 'react-hot-toast';
+import { useLocation } from 'react-router-dom';
 
 /* ── Helpers ──────────────────────────────────────────────────────── */
 const Spinner = () => (
-  <div className="flex flex-col items-center justify-center py-32 gap-3">
-    <div className="w-9 h-9 border-[3px] border-primary-100 border-t-primary-500 rounded-full animate-spin-slow" />
-    <p className="text-sm text-surface-400 font-medium">Loading bookings…</p>
+  <div className="flex flex-col items-center justify-center py-32 gap-4 animate-fade-in">
+    <div className="relative flex items-center justify-center">
+      <div className="absolute w-12 h-12 rounded-full border border-primary-500/10 animate-ping opacity-25" />
+      <svg className="w-10 h-10 animate-spin text-primary-500" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle className="opacity-10" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+        <path className="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+      </svg>
+    </div>
+    <span className="text-[11px] text-primary-400 font-bold uppercase tracking-[0.25em]">Loading bookings…</span>
   </div>
 );
 
@@ -45,8 +52,16 @@ const Bookings = () => {
     PickupDate: '', ReturnDate: '', CustID: '', CarID: '',
   };
   const [form, setForm] = useState(emptyForm);
+  const location = useLocation();
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => {
+    fetchData();
+    if (location.state?.openAddModal) {
+      setShowModal(true);
+      // Clear navigation state
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   const fetchData = async () => {
     try {
@@ -55,9 +70,9 @@ const Bookings = () => {
         carService.getAllCars(),
         customerService.getAllCustomers(),
       ]);
-      setBookings(bRes.data || []);
-      setCars(cRes.data || []);
-      setCustomers(cuRes.data || []);
+      setBookings(Array.isArray(bRes) ? bRes : []);
+      setCars(Array.isArray(cRes) ? cRes : []);
+      setCustomers(Array.isArray(cuRes) ? cuRes : []);
     } catch { toast.error('Failed to load bookings data'); }
     finally { setLoading(false); }
   };
@@ -76,7 +91,7 @@ const Bookings = () => {
         PickupDate: form.PickupDate,
         ReturnDate: form.ReturnDate,
       });
-      setCostCalc(res.data);
+      setCostCalc(res);
     } catch (e) { toast.error(e?.error || 'Failed to calculate cost'); }
     finally { setCalculating(false); }
   };
@@ -124,7 +139,7 @@ const Bookings = () => {
       <div className="card overflow-hidden">
         {bookings.length === 0 ? (
           <div className="empty-state">
-            <div className="w-16 h-16 rounded-2xl bg-primary-50 flex items-center justify-center mb-4">
+            <div className="w-16 h-16 rounded-2xl bg-primary-500/10 flex items-center justify-center mb-4">
               <svg className="w-8 h-8 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
                   d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -153,8 +168,8 @@ const Bookings = () => {
                 {bookings.map((b) => (
                   <tr key={b.BookingID}>
                     <td><span className="mono-tag">#{b.BookingID}</span></td>
-                    <td className="font-semibold text-surface-900">{b.customer?.FullName || 'N/A'}</td>
-                    <td className="text-surface-600">{b.car?.Brand} {b.car?.Model}</td>
+                    <td className="font-semibold text-surface-900">{b.CustomerName || 'N/A'}</td>
+                    <td className="text-surface-600">{b.Brand} {b.Model}</td>
                     <td className="text-surface-400 text-xs tabular">
                       {new Date(b.PickupDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                     </td>
@@ -243,23 +258,23 @@ const Bookings = () => {
                 </button>
 
                 {costCalc && (
-                  <div className="rounded-2xl overflow-hidden border border-primary-100 animate-slide-up">
-                    <div className="bg-gradient-primary px-4 py-2">
-                      <p className="text-white text-xs font-semibold uppercase tracking-wider">Cost Breakdown</p>
+                  <div className="rounded-2xl overflow-hidden border border-primary-500/20 animate-slide-up bg-surface-950">
+                    <div className="bg-gradient-primary px-4 py-2 flex items-center justify-between">
+                      <p className="text-surface-950 text-xs font-bold uppercase tracking-wider">Cost Breakdown</p>
                     </div>
-                    <div className="p-4 bg-primary-50 space-y-2">
+                    <div className="p-4 space-y-2">
                       <div className="flex justify-between text-sm">
-                        <span className="text-surface-500">Duration</span>
-                        <span className="font-semibold text-surface-800">{costCalc.days} days</span>
+                        <span className="text-surface-400">Duration</span>
+                        <span className="font-semibold text-white">{costCalc.days} days</span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-surface-500">Daily rate</span>
-                        <span className="font-semibold text-surface-800">${costCalc.pricePerDay}</span>
+                        <span className="text-surface-400">Daily rate</span>
+                        <span className="font-semibold text-white">${costCalc.pricePerDay}</span>
                       </div>
                       <div className="divider" />
                       <div className="flex justify-between">
-                        <span className="font-bold text-surface-800">Total</span>
-                        <span className="text-xl font-bold text-primary-700">${costCalc.totalCost}</span>
+                        <span className="font-bold text-white">Total</span>
+                        <span className="text-xl font-bold text-primary-400">${costCalc.totalCost}</span>
                       </div>
                     </div>
                   </div>
