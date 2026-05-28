@@ -6,9 +6,15 @@ import toast from 'react-hot-toast';
 
 /* ── Helpers ──────────────────────────────────────────────────────── */
 const Spinner = () => (
-  <div className="flex flex-col items-center justify-center py-32 gap-3">
-    <div className="w-9 h-9 border-[3px] border-primary-100 border-t-primary-500 rounded-full animate-spin-slow" />
-    <p className="text-sm text-surface-400 font-medium">Loading rentals…</p>
+  <div className="flex flex-col items-center justify-center py-32 gap-4 animate-fade-in">
+    <div className="relative flex items-center justify-center">
+      <div className="absolute w-12 h-12 rounded-full border border-primary-500/10 animate-ping opacity-25" />
+      <svg className="w-10 h-10 animate-spin text-primary-500" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle className="opacity-10" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+        <path className="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+      </svg>
+    </div>
+    <span className="text-[11px] text-primary-400 font-bold uppercase tracking-[0.25em]">Loading rentals…</span>
   </div>
 );
 
@@ -43,8 +49,8 @@ const Rentals = () => {
         rentalService.getAllRentals(),
         bookingService.getAllBookings(),
       ]);
-      setRentals(rRes.data || []);
-      const pending = (bRes.data || []).filter((b) => b.Status === 'Pending' && !b.rental);
+      setRentals(Array.isArray(rRes) ? rRes : []);
+      const pending = (Array.isArray(bRes) ? bRes : []).filter((b) => b.Status === 'Pending' && !b.RentalID);
       setPendingBookings(pending);
     } catch { toast.error('Failed to fetch rentals data'); }
     finally { setLoading(false); }
@@ -56,8 +62,8 @@ const Rentals = () => {
       setForm((p) => ({
         ...p,
         BookingID: bookingId,
-        StartDate: booking.PickupDate.split('T')[0],
-        EndDate:   booking.ReturnDate.split('T')[0],
+        StartDate: new Date(booking.PickupDate).toISOString().split('T')[0],
+        EndDate:   new Date(booking.ReturnDate).toISOString().split('T')[0],
       }));
     } else {
       set('BookingID', bookingId);
@@ -141,7 +147,7 @@ const Rentals = () => {
       <div className="card overflow-hidden">
         {rentals.length === 0 ? (
           <div className="empty-state">
-            <div className="w-16 h-16 rounded-2xl bg-primary-50 flex items-center justify-center mb-4">
+            <div className="w-16 h-16 rounded-2xl bg-primary-500/10 flex items-center justify-center mb-4">
               <svg className="w-8 h-8 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
                   d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -172,14 +178,14 @@ const Rentals = () => {
                     <td>
                       <div>
                         <span className="mono-tag">#{r.RentalID}</span>
-                        <p className="text-[10px] text-surface-400 mt-1">Booking #{r.booking?.BookingID}</p>
+                        <p className="text-[10px] text-surface-400 mt-1">Booking #{r.BookingID}</p>
                       </div>
                     </td>
                     <td className="font-semibold text-surface-900 text-sm">
-                      {r.booking?.customer?.FullName || 'N/A'}
+                      {r.CustomerName || 'N/A'}
                     </td>
                     <td className="text-surface-600 text-sm">
-                      {r.booking?.car?.Brand} {r.booking?.car?.Model}
+                      {r.Brand} {r.Model}
                     </td>
                     <td className="text-xs text-surface-400 tabular">
                       {new Date(r.StartDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
@@ -202,9 +208,8 @@ const Rentals = () => {
                     <td>
                       {!r.ActualReturnDate && (
                         <button id={`return-car-${r.RentalID}`}
-                          onClick={() => handleReturn(r.RentalID, r.booking?.BookingID, r.booking?.CarID)}
-                          className="btn-sm px-3 py-1.5 bg-primary-50 text-primary-700 hover:bg-primary-100
-                                     border border-primary-200 rounded-xl font-semibold transition-all">
+                          onClick={() => handleReturn(r.RentalID, r.BookingID, r.CarID)}
+                          className="btn-xs bg-primary-500/10 text-primary-400 hover:bg-primary-500/20 border border-primary-500/20 rounded-xl font-bold transition-all">
                           ↩ Return
                         </button>
                       )}
@@ -256,7 +261,7 @@ const Rentals = () => {
                       <option value="">Select a pending booking…</option>
                       {pendingBookings.map((b) => (
                         <option key={b.BookingID} value={b.BookingID}>
-                          #{b.BookingID} — {b.customer?.FullName} · {b.car?.Brand} {b.car?.Model}
+                          #{b.BookingID} — {b.CustomerName} · {b.Brand} {b.Model}
                         </option>
                       ))}
                     </select>
