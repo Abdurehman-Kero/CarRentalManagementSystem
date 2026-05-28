@@ -1,12 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import customerService from '../services/customerService';
 import toast from 'react-hot-toast';
+import { useLocation } from 'react-router-dom';
 
 /* ── Helpers ──────────────────────────────────────────────────────── */
 const Spinner = () => (
-  <div className="flex flex-col items-center justify-center py-32 gap-3">
-    <div className="w-9 h-9 border-[3px] border-primary-100 border-t-primary-500 rounded-full animate-spin-slow" />
-    <p className="text-sm text-surface-400 font-medium">Loading customers…</p>
+  <div className="flex flex-col items-center justify-center py-32 gap-4 animate-fade-in">
+    <div className="relative flex items-center justify-center">
+      <div className="absolute w-12 h-12 rounded-full border border-primary-500/10 animate-ping opacity-25" />
+      <svg className="w-10 h-10 animate-spin text-primary-500" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle className="opacity-10" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+        <path className="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+      </svg>
+    </div>
+    <span className="text-[11px] text-primary-400 font-bold uppercase tracking-[0.25em]">Loading customers…</span>
   </div>
 );
 
@@ -42,13 +49,21 @@ const Customers = () => {
   };
   const [form, setForm] = useState(emptyForm);
   const set = (k, v) => setForm((p) => ({ ...p, [k]: v }));
+  const location = useLocation();
 
-  useEffect(() => { fetchCustomers(); }, []);
+  useEffect(() => {
+    fetchCustomers();
+    if (location.state?.openAddModal) {
+      setShowModal(true);
+      // Clear navigation state
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   const fetchCustomers = async () => {
     try {
       const res = await customerService.getAllCustomers();
-      setCustomers(res.data || []);
+      setCustomers(Array.isArray(res) ? res : []);
     } catch { toast.error('Failed to fetch customers'); }
     finally { setLoading(false); }
   };
@@ -127,7 +142,7 @@ const Customers = () => {
       <div className="card overflow-hidden">
         {filtered.length === 0 ? (
           <div className="empty-state">
-            <div className="w-16 h-16 rounded-2xl bg-primary-50 flex items-center justify-center mb-4">
+            <div className="w-16 h-16 rounded-2xl bg-primary-500/10 flex items-center justify-center mb-4">
               <svg className="w-8 h-8 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
                   d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -182,12 +197,12 @@ const Customers = () => {
                     <td>
                       <div className="flex items-center gap-1">
                         <button id={`edit-customer-${c.CustID}`} onClick={() => handleEdit(c)}
-                          className="btn-sm px-3 py-1.5 text-primary-600 hover:bg-primary-50 rounded-lg font-semibold transition-colors">
+                          className="btn-xs bg-primary-500/10 text-primary-400 hover:bg-primary-500/20 border border-primary-500/20 rounded-xl font-bold transition-all">
                           Edit
                         </button>
                         <button id={`delete-customer-${c.CustID}`}
                           onClick={() => handleDelete(c.CustID, c.bookings?.length > 0)}
-                          className="btn-sm px-3 py-1.5 text-danger-600 hover:bg-danger-50 rounded-lg font-semibold transition-colors">
+                          className="btn-xs bg-danger-500/10 text-danger-400 hover:bg-danger-500/20 border border-danger-500/20 rounded-xl font-bold transition-all">
                           Delete
                         </button>
                       </div>
