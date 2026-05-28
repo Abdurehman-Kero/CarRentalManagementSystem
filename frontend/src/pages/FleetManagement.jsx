@@ -1,12 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import carService from '../services/carService';
 import toast from 'react-hot-toast';
+import { useLocation } from 'react-router-dom';
 
 /* ── Helpers ──────────────────────────────────────────────────────── */
 const Spinner = () => (
-  <div className="flex flex-col items-center justify-center py-32 gap-3">
-    <div className="w-9 h-9 border-[3px] border-primary-100 border-t-primary-500 rounded-full animate-spin-slow" />
-    <p className="text-sm text-surface-400 font-medium">Loading fleet…</p>
+  <div className="flex flex-col items-center justify-center py-32 gap-4 animate-fade-in">
+    <div className="relative flex items-center justify-center">
+      <div className="absolute w-12 h-12 rounded-full border border-primary-500/10 animate-ping opacity-25" />
+      <svg className="w-10 h-10 animate-spin text-primary-500" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle className="opacity-10" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+        <path className="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+      </svg>
+    </div>
+    <span className="text-[11px] text-primary-400 font-bold uppercase tracking-[0.25em]">Loading fleet…</span>
   </div>
 );
 
@@ -44,17 +51,25 @@ const FleetManagement = () => {
 
   const emptyForm = {
     CarID: '', Brand: '', Model: '', Year: '', Color: '',
-    LicensePlate: '', DailyRate: '', Status: 'Available', Mileage: '',
+    LicensePlate: '', DailyRate: '', Status: 'Available', Mileage: '', ImageURL: '',
   };
   const [form, setForm] = useState(emptyForm);
   const set = (k, v) => setForm((p) => ({ ...p, [k]: v }));
+  const location = useLocation();
 
-  useEffect(() => { fetchCars(); }, []);
+  useEffect(() => {
+    fetchCars();
+    if (location.state?.openAddModal) {
+      setShowModal(true);
+      // Clear navigation state
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   const fetchCars = async () => {
     try {
       const res = await carService.getAllCars();
-      setCars(res.data || []);
+      setCars(Array.isArray(res) ? res : []);
     } catch { toast.error('Failed to load fleet'); }
     finally { setLoading(false); }
   };
@@ -156,7 +171,7 @@ const FleetManagement = () => {
       <div className="card overflow-hidden">
         {filtered.length === 0 ? (
           <div className="empty-state">
-            <div className="w-16 h-16 rounded-2xl bg-primary-50 flex items-center justify-center mb-4">
+            <div className="w-16 h-16 rounded-2xl bg-primary-500/10 flex items-center justify-center mb-4">
               <svg className="w-8 h-8 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
                   d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0zM13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10l1 1h1m8-1h3l3-3-1-5h-5v8zm-8 0h8" />
@@ -191,11 +206,23 @@ const FleetManagement = () => {
                 {filtered.map((car) => (
                   <tr key={car.CarID}>
                     <td>
-                      <div>
-                        <p className="font-bold text-surface-900 text-sm">
-                          {car.Brand} <span className="font-medium text-surface-600">{car.Model}</span>
-                        </p>
-                        <span className="mono-tag mt-0.5 inline-block">{car.CarID}</span>
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-9 rounded-lg overflow-hidden bg-surface-900 border border-surface-800 flex-shrink-0 flex items-center justify-center shadow-sm">
+                          {car.ImageURL ? (
+                            <img src={car.ImageURL} alt={`${car.Brand} ${car.Model}`} className="w-full h-full object-cover" />
+                          ) : (
+                            <svg className="w-5 h-5 text-surface-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+                                d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0zM13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10l1 1h1m8-1h3l3-3-1-5h-5v8zm-8 0h8" />
+                            </svg>
+                          )}
+                        </div>
+                        <div>
+                          <p className="font-bold text-surface-900 text-sm">
+                            {car.Brand} <span className="font-medium text-surface-600">{car.Model}</span>
+                          </p>
+                          <span className="mono-tag mt-0.5 inline-block">{car.CarID}</span>
+                        </div>
                       </div>
                     </td>
                     <td className="tabular text-surface-600">{car.Year}</td>
@@ -218,11 +245,11 @@ const FleetManagement = () => {
                     <td>
                       <div className="flex gap-1">
                         <button id={`edit-car-${car.CarID}`} onClick={() => handleEdit(car)}
-                          className="btn-sm px-3 py-1.5 text-primary-600 hover:bg-primary-50 rounded-lg font-semibold transition-colors">
+                          className="btn-xs bg-primary-500/10 text-primary-400 hover:bg-primary-500/20 border border-primary-500/20 rounded-xl font-bold transition-all">
                           Edit
                         </button>
                         <button id={`remove-car-${car.CarID}`} onClick={() => handleDelete(car.CarID)}
-                          className="btn-sm px-3 py-1.5 text-danger-600 hover:bg-danger-50 rounded-lg font-semibold transition-colors">
+                          className="btn-xs bg-danger-500/10 text-danger-400 hover:bg-danger-500/20 border border-danger-500/20 rounded-xl font-bold transition-all">
                           Remove
                         </button>
                       </div>
@@ -317,6 +344,12 @@ const FleetManagement = () => {
                       <option value="Retired">Retired</option>
                     </select>
                   </div>
+                </div>
+
+                <div>
+                  <label className="input-label">Image URL</label>
+                  <input type="url" placeholder="https://images.unsplash.com/... or data:image/..." className="input-field"
+                    value={form.ImageURL || ''} onChange={(e) => set('ImageURL', e.target.value)} />
                 </div>
               </div>
 
