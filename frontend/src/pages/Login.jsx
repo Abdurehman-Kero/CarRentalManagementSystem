@@ -21,6 +21,7 @@ const Login = () => {
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading]   = useState(false);
   const [shake, setShake]       = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
 
   // If already logged in, redirect
   useEffect(() => {
@@ -32,8 +33,9 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setErrorMsg('');
     if (!form.email.trim() || !form.password) {
-      toast.error('Please fill in both fields');
+      setErrorMsg('Please fill in both fields');
       return;
     }
     setLoading(true);
@@ -42,6 +44,7 @@ const Login = () => {
       toast.success('Welcome to Sheger Drive Premium 👋');
       navigate(from, { replace: true });
     } catch (err) {
+      setErrorMsg(err.message || err.response?.data?.error || 'Invalid email or password');
       setShake(true);
       setTimeout(() => setShake(false), 600);
     } finally {
@@ -172,6 +175,16 @@ const Login = () => {
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+
+            {/* Inline Error */}
+            {errorMsg && (
+              <div className="bg-danger-500/10 border border-danger-500/20 text-danger-500 text-sm p-3 rounded-xl flex items-start gap-2">
+                <svg className="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>{errorMsg}</span>
+              </div>
+            )}
 
             {/* Email */}
             <div>
