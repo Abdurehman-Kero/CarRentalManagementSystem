@@ -55,3 +55,10 @@ coverage/
 *.tmp
 *.temp
 commit_history.ps1
+
+# ── Dev / helper scripts (not part of project) ───────────
+.vscode/
+parse_forks.js
+run_commits_fixed.js
+backend/check-schema.js
+backend/test-apis.js
