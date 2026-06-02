@@ -85,9 +85,9 @@ const createCar = async (req, res) => {
         Status || 'Available',
         DailyRate  ? parseFloat(DailyRate) : null,
         Mileage    ? parseInt(Mileage)     : null,
-        CategoryID ? parseInt(CategoryID)  : null,
-        BranchID   ? parseInt(BranchID)    : null,
-        PolicyID   ? parseInt(PolicyID)    : null,
+        CategoryID ? parseInt(CategoryID)  : 1,
+        BranchID   ? parseInt(BranchID)    : 1,
+        PolicyID   ? parseInt(PolicyID)    : 1,
       ]
     );
 
