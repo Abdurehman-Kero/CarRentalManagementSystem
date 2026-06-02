@@ -5,6 +5,7 @@ import carService      from '../services/carService';
 import customerService from '../services/customerService';
 import bookingService  from '../services/bookingService';
 import rentalService   from '../services/rentalService';
+import { useAuth } from '../context/AuthContext';
 
 /* ── Stat Card ────────────────────────────────────────────────────── */
 const StatCard = ({ title, value, icon, gradient, delta, loading }) => (
@@ -27,7 +28,7 @@ const StatCard = ({ title, value, icon, gradient, delta, loading }) => (
       {loading ? (
         <div className="h-8 w-28 skeleton" />
       ) : (
-        <p className="text-3xl font-bold text-white tracking-tight">{value}</p>
+        <p className="text-3xl font-bold text-surface-900 tracking-tight">{value}</p>
       )}
     </div>
   </div>
@@ -52,8 +53,9 @@ const StatusBadge = ({ status }) => {
 /* ── Dashboard ────────────────────────────────────────────────────── */
 const Dashboard = () => {
   const navigate = useNavigate();
+  const { admin } = useAuth();
   const [stats, setStats] = useState({
-    totalRentals: 0, availableCars: 0, totalCustomers: 0, revenue: 0, loading: true,
+    totalRentals: 0, availableCars: 0, totalCustomers: 0, revenue: 0, maintenanceCars: 0, pendingBookings: 0, latestBookingText: '', loading: true,
   });
   const [recentBookings, setRecentBookings] = useState([]);
   const [loadingBookings, setLoadingBookings] = useState(true);
@@ -74,14 +76,30 @@ const Dashboard = () => {
         const rentalsArr   = Array.isArray(rentals)    ? rentals   : [];
 
         const available   = carsArr.filter(c => c.Status === 'Available').length;
+        const maintenance = carsArr.filter(c => c.Status === 'Maintenance').length;
+        const pendingBook  = bookingsArr.filter(b => b.Status === 'Pending').length;
         const activeRents = rentalsArr.filter(r => !r.ActualReturnDate).length;
         const revenue     = rentalsArr.reduce((s, r) => s + parseFloat(r.TotalAmount || 0), 0);
+
+        let latestBookingText = 'No recent reservations';
+        if (bookingsArr.length > 0) {
+          const sorted = [...bookingsArr].sort((a, b) => new Date(b.BookingDate) - new Date(a.BookingDate));
+          const latest = sorted[0];
+          const diffMs = new Date() - new Date(latest.BookingDate);
+          const diffMins = Math.round(diffMs / 60000);
+          if (diffMins < 60) latestBookingText = `Received ${diffMins} minutes ago`;
+          else if (diffMins < 1440) latestBookingText = `Received ${Math.round(diffMins / 60)} hours ago`;
+          else latestBookingText = `Received ${Math.round(diffMins / 1440)} days ago`;
+        }
 
         setStats({
           totalRentals:   activeRents,
           availableCars:  available,
           totalCustomers: customersArr.length,
           revenue:        Math.round(revenue),
+          maintenanceCars: maintenance,
+          pendingBookings: pendingBook,
+          latestBookingText,
           loading:        false,
         });
 
@@ -111,7 +129,6 @@ const Dashboard = () => {
     {
       title: 'Active Rentals',
       value: stats.totalRentals,
-      delta: 12,
       gradient: 'bg-gradient-primary',
       icon: <svg className="w-6 h-6 text-surface-950" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5}
@@ -121,7 +138,6 @@ const Dashboard = () => {
     {
       title: 'Available Cars',
       value: stats.availableCars,
-      delta: 5,
       gradient: 'bg-gradient-success',
       icon: <svg className="w-6 h-6 text-surface-950" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5}
@@ -131,7 +147,6 @@ const Dashboard = () => {
     {
       title: 'Total Customers',
       value: stats.totalCustomers,
-      delta: 8,
       gradient: 'bg-gradient-info',
       icon: <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
@@ -141,7 +156,6 @@ const Dashboard = () => {
     {
       title: 'Monthly Revenue',
       value: `$${stats.revenue.toLocaleString()}`,
-      delta: 18,
       gradient: 'bg-gradient-warning',
       icon: <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
@@ -156,7 +170,7 @@ const Dashboard = () => {
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="page-title">Welcome Back, Admin 👋</h1>
+          <h1 className="page-title">Welcome Back, {admin?.fullName || 'Admin'} 👋</h1>
           <p className="page-subtitle">Here is the luxury fleet overview for today.</p>
         </div>
         <div className="hidden sm:flex items-center gap-2 text-xs text-surface-400 font-bold
@@ -180,7 +194,7 @@ const Dashboard = () => {
         <div className="xl:col-span-2 card overflow-hidden">
           <div className="flex items-center justify-between px-5 py-4 border-b border-surface-800">
             <div>
-              <h2 className="text-base font-bold text-white">Recent Reservations</h2>
+              <h2 className="text-base font-bold text-surface-900">Recent Reservations</h2>
               <p className="text-xs text-surface-400 mt-0.5">Latest premium vehicle bookings</p>
             </div>
             <span className="pill-primary">Live</span>
@@ -218,7 +232,7 @@ const Dashboard = () => {
                             style={{ background: 'linear-gradient(135deg, #D5B277, #846029)' }}>
                             {b.customerName.charAt(0)}
                           </div>
-                          <span className="font-semibold text-white text-sm">{b.customerName}</span>
+                          <span className="font-semibold text-surface-900 text-sm">{b.customerName}</span>
                         </div>
                       </td>
                       <td className="text-surface-300 text-sm font-medium">{b.carModel}</td>
@@ -226,7 +240,7 @@ const Dashboard = () => {
                         {b.startDate} — {b.endDate}
                       </td>
                       <td><StatusBadge status={b.status} /></td>
-                      <td className="text-right font-bold text-white">${b.amount}</td>
+                      <td className="text-right font-bold text-surface-900">${b.amount}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -240,7 +254,7 @@ const Dashboard = () => {
 
           {/* Quick Actions */}
           <div className="card p-5">
-            <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
+            <h3 className="text-sm font-bold text-surface-900 mb-4 flex items-center gap-2">
               <span className="w-1.5 h-4 rounded-full bg-gradient-primary inline-block" />
               Quick Actions
             </h3>
@@ -261,9 +275,9 @@ const Dashboard = () => {
             </div>
           </div>
 
-          {/* System Status */}
+          {/* System Diagnostics */}
           <div className="card p-5">
-            <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
+            <h3 className="text-sm font-bold text-surface-900 mb-4 flex items-center gap-2">
               <span className="w-1.5 h-4 rounded-full bg-gradient-success inline-block" />
               System Diagnostics
             </h3>
@@ -271,7 +285,6 @@ const Dashboard = () => {
               {[
                 { label: 'Database Service', status: 'Online',    color: 'bg-success-500', ok: true },
                 { label: 'API Server Host', status: 'Running',   color: 'bg-success-500', ok: true },
-                { label: 'Last Cloud Backup', status: '2 hrs ago', color: null,             ok: false },
               ].map(({ label, status, color, ok }) => (
                 <div key={label} className="flex items-center justify-between text-sm">
                   <span className="text-surface-400 font-medium">{label}</span>
@@ -287,25 +300,38 @@ const Dashboard = () => {
 
           {/* Alerts */}
           <div className="card p-5">
-            <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
+            <h3 className="text-sm font-bold text-surface-900 mb-4 flex items-center gap-2">
               <span className="w-1.5 h-4 rounded-full bg-gradient-warning inline-block" />
               System Alerts
             </h3>
             <div className="space-y-2.5">
-              <div className="flex items-start gap-3 p-3 rounded-xl bg-warning-50/5 border border-warning-500/10">
-                <span className="text-warning-500 mt-0.5 text-base flex-shrink-0">⚠️</span>
-                <div>
-                  <p className="text-sm font-bold text-warning-500">Fleet Maintenance Due</p>
-                  <p className="text-xs text-surface-400 mt-0.5">3 vehicles need inspections soon</p>
+              {stats.maintenanceCars > 0 && (
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-warning-50/5 border border-warning-500/10">
+                  <span className="text-warning-500 mt-0.5 text-base flex-shrink-0">⚠️</span>
+                  <div>
+                    <p className="text-sm font-bold text-warning-500">Fleet Maintenance Due</p>
+                    <p className="text-xs text-surface-400 mt-0.5">{stats.maintenanceCars} vehicle{stats.maintenanceCars !== 1 ? 's' : ''} in maintenance</p>
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-start gap-3 p-3 rounded-xl bg-primary-950/20 border border-primary-500/10">
-                <span className="text-primary-400 mt-0.5 text-base flex-shrink-0">📋</span>
-                <div>
-                  <p className="text-sm font-bold text-primary-400">Reservation Confirmed</p>
-                  <p className="text-xs text-surface-400 mt-0.5">Received 5 minutes ago</p>
+              )}
+              {stats.pendingBookings > 0 && (
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-info-50/5 border border-info-500/10">
+                  <span className="text-info-400 mt-0.5 text-base flex-shrink-0">📋</span>
+                  <div>
+                    <p className="text-sm font-bold text-info-400">Pending Reservations</p>
+                    <p className="text-xs text-surface-400 mt-0.5">{stats.pendingBookings} reservation{stats.pendingBookings !== 1 ? 's' : ''} awaiting approval</p>
+                  </div>
                 </div>
-              </div>
+              )}
+              {stats.maintenanceCars === 0 && stats.pendingBookings === 0 && (
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-success-50/5 border border-success-500/10">
+                  <span className="text-success-500 mt-0.5 text-base flex-shrink-0">✅</span>
+                  <div>
+                    <p className="text-sm font-bold text-success-500">All Clear</p>
+                    <p className="text-xs text-surface-400 mt-0.5">No critical alerts right now</p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
