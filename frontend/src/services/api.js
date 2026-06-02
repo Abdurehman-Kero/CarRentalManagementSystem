@@ -58,7 +58,10 @@ api.interceptors.response.use(
           errorMessage = 'Unauthorized - please log in again';
           // Clear auth token on 401
           localStorage.removeItem('authToken');
-          // Redirect to login if needed
+          // Redirect to login page
+          if (window.location.pathname !== '/login') {
+            window.location.href = '/login';
+          }
           break;
         case 403:
           errorMessage = 'Forbidden - you do not have permission';
