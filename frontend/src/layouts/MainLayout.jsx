@@ -95,11 +95,9 @@ const MainLayout = () => {
   const currentPage = navigation.find((n) => isActive(n.href))?.name || 'Dashboard';
 
   const handleLogout = () => {
+    logout();
     navigate('/login', { replace: true });
-    setTimeout(() => {
-      logout();
-      toast.success('Signed out successfully');
-    }, 50);
+    toast.success('Logged out successfully');
   };
 
   const initials = admin?.fullName
@@ -143,7 +141,7 @@ const MainLayout = () => {
             </svg>
           </div>
           <div>
-            <p className="text-sm font-bold text-white tracking-tight leading-none">Sheger Drive</p>
+            <p className="text-sm font-bold text-surface-900 tracking-tight leading-none">Sheger Drive</p>
             <p className="text-[10px] text-primary-400 mt-0.5 uppercase tracking-[0.2em] font-semibold">Luxury Portal</p>
           </div>
         </div>
@@ -210,7 +208,7 @@ const MainLayout = () => {
               {initials}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-white truncate">{admin?.fullName || 'Admin'}</p>
+              <p className="text-sm font-semibold text-surface-900 truncate">{admin?.fullName || 'Admin'}</p>
               <p className="text-xs text-surface-400 truncate">{admin?.email || ''}</p>
             </div>
             <button
@@ -258,7 +256,7 @@ const MainLayout = () => {
             <svg className="w-3 h-3 text-surface-800 hidden sm:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
-            <span className="font-semibold text-white text-sm">{currentPage}</span>
+            <span className="font-semibold text-surface-900 text-sm">{currentPage}</span>
           </div>
 
           {/* Right */}
@@ -326,7 +324,7 @@ const MainLayout = () => {
                 <div className="absolute right-0 top-full mt-2 w-52 bg-surface-900 rounded-2xl shadow-modal
                                 border border-surface-800 overflow-hidden z-50 animate-slide-up">
                   <div className="px-4 py-3 border-b border-surface-800">
-                    <p className="text-sm font-bold text-white truncate">{admin?.fullName}</p>
+                    <p className="text-sm font-bold text-surface-900 truncate">{admin?.fullName}</p>
                     <p className="text-xs text-surface-400 truncate">{admin?.email}</p>
                     <span className="inline-flex mt-1 items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold"
                       style={{ background: isSuperAdmin ? 'rgba(195,147,72,0.1)' : 'rgba(16,185,129,0.1)',
