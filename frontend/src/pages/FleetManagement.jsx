@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import carService from '../services/carService';
 import toast from 'react-hot-toast';
 import { useLocation } from 'react-router-dom';
+import ConfirmModal from '../components/ConfirmModal';
 
 /* ── Helpers ──────────────────────────────────────────────────────── */
 const Spinner = () => (
@@ -48,6 +49,7 @@ const FleetManagement = () => {
   const [submitting, setSubmitting] = useState(false);
   const [search, setSearch]         = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [confirmDelete, setConfirmDelete] = useState(null); // car id to delete
 
   const emptyForm = {
     CarID: '', Brand: '', Model: '', Year: '', Color: '',
@@ -92,11 +94,17 @@ const FleetManagement = () => {
 
   const handleEdit = (car) => { setEditing(car); setForm({ ...car }); setShowModal(true); };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Remove this vehicle from the fleet?')) return;
+  const handleDelete = (id) => {
+    setConfirmDelete(id);
+  };
+
+  const doDelete = async () => {
+    const id = confirmDelete;
+    setConfirmDelete(null);
     try {
       await carService.deleteCar(id);
-      toast.success('Vehicle removed'); fetchCars();
+      toast.success('Vehicle removed from fleet');
+      fetchCars();
     } catch { toast.error('Failed to remove vehicle'); }
   };
 
@@ -363,6 +371,18 @@ const FleetManagement = () => {
           </div>
         </div>
       )}
+
+      {/* Delete Vehicle Confirmation */}
+      <ConfirmModal
+        open={!!confirmDelete}
+        variant="danger"
+        title="Remove Vehicle"
+        message="This will permanently remove the vehicle from your fleet. This action cannot be undone."
+        confirmText="Yes, Remove"
+        cancelText="Keep Vehicle"
+        onConfirm={doDelete}
+        onCancel={() => setConfirmDelete(null)}
+      />
     </div>
   );
 };
