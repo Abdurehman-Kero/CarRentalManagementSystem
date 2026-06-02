@@ -3,6 +3,7 @@ import rentalService from '../services/rentalService';
 import bookingService from '../services/bookingService';
 import carService from '../services/carService';
 import toast from 'react-hot-toast';
+import ConfirmModal from '../components/ConfirmModal';
 
 /* ── Helpers ──────────────────────────────────────────────────────── */
 const Spinner = () => (
@@ -33,6 +34,7 @@ const Rentals = () => {
   const [loading, setLoading]               = useState(true);
   const [showModal, setShowModal]           = useState(false);
   const [submitting, setSubmitting]         = useState(false);
+  const [confirmReturn, setConfirmReturn]   = useState(null); // { rentalId, bookingId, carId }
 
   const emptyForm = {
     RentalID: '', StartDate: new Date().toISOString().split('T')[0],
@@ -90,8 +92,13 @@ const Rentals = () => {
     finally { setSubmitting(false); }
   };
 
-  const handleReturn = async (rentalId, bookingId, carId) => {
-    if (!window.confirm('Confirm car return? Booking will be marked Completed.')) return;
+  const handleReturn = (rentalId, bookingId, carId) => {
+    setConfirmReturn({ rentalId, bookingId, carId });
+  };
+
+  const doReturn = async () => {
+    const { rentalId, bookingId, carId } = confirmReturn;
+    setConfirmReturn(null);
     try {
       const today = new Date().toISOString().split('T')[0];
       await rentalService.returnCar(rentalId, today);
@@ -299,6 +306,24 @@ const Rentals = () => {
           </div>
         </div>
       )}
+
+      {/* Return Car Confirmation */}
+      <ConfirmModal
+        open={!!confirmReturn}
+        variant="warning"
+        title="Confirm Car Return"
+        message="This will mark the booking as Completed and set the car back to Available. Are you sure?"
+        confirmText="Yes, Return Car"
+        cancelText="Cancel"
+        onConfirm={doReturn}
+        onCancel={() => setConfirmReturn(null)}
+        icon={
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+              d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+          </svg>
+        }
+      />
     </div>
   );
 };
