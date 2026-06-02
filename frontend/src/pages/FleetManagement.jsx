@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import carService from '../services/carService';
+import categoryService from '../services/categoryService';
+import branchService from '../services/branchService';
+import fuelPolicyService from '../services/fuelPolicyService';
 import toast from 'react-hot-toast';
 import { useLocation } from 'react-router-dom';
 import ConfirmModal from '../components/ConfirmModal';
@@ -51,9 +54,14 @@ const FleetManagement = () => {
   const [statusFilter, setStatusFilter] = useState('');
   const [confirmDelete, setConfirmDelete] = useState(null); // car id to delete
 
+  const [categories, setCategories] = useState([]);
+  const [branches, setBranches]     = useState([]);
+  const [policies, setPolicies]     = useState([]);
+
   const emptyForm = {
     CarID: '', Brand: '', Model: '', Year: '', Color: '',
     LicensePlate: '', DailyRate: '', Status: 'Available', Mileage: '', ImageURL: '',
+    CategoryID: '', BranchID: '', PolicyID: ''
   };
   const [form, setForm] = useState(emptyForm);
   const set = (k, v) => setForm((p) => ({ ...p, [k]: v }));
@@ -61,6 +69,7 @@ const FleetManagement = () => {
 
   useEffect(() => {
     fetchCars();
+    fetchLookups();
     if (location.state?.openAddModal) {
       setShowModal(true);
       // Clear navigation state
@@ -74,6 +83,19 @@ const FleetManagement = () => {
       setCars(Array.isArray(res) ? res : []);
     } catch { toast.error('Failed to load fleet'); }
     finally { setLoading(false); }
+  };
+
+  const fetchLookups = async () => {
+    try {
+      const [catRes, branchRes, polRes] = await Promise.all([
+        categoryService.getAllCategories(),
+        branchService.getAllBranches(),
+        fuelPolicyService.getAllFuelPolicies()
+      ]);
+      setCategories(Array.isArray(catRes) ? catRes : []);
+      setBranches(Array.isArray(branchRes) ? branchRes : []);
+      setPolicies(Array.isArray(polRes) ? polRes : []);
+    } catch { toast.error('Failed to load form dropdown data'); }
   };
 
   const handleSubmit = async (e) => {
@@ -354,10 +376,57 @@ const FleetManagement = () => {
                   </div>
                 </div>
 
-                <div>
-                  <label className="input-label">Image URL</label>
-                  <input type="url" placeholder="https://images.unsplash.com/... or data:image/..." className="input-field"
-                    value={form.ImageURL || ''} onChange={(e) => set('ImageURL', e.target.value)} />
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="input-label">Category</label>
+                    {categories.length === 0 ? (
+                      <div className="text-xs text-warning-600 mt-1 bg-warning-50 p-2.5 rounded-xl border border-warning-200 flex items-center gap-2">
+                        <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                        <span>Add categories in Settings first.</span>
+                      </div>
+                    ) : (
+                      <select className="select-field" value={form.CategoryID} onChange={(e) => set('CategoryID', e.target.value)} required>
+                        <option value="">Select Category</option>
+                        {categories.map(c => <option key={c.CategoryID} value={c.CategoryID}>{c.CategoryName}</option>)}
+                      </select>
+                    )}
+                  </div>
+                  <div>
+                    <label className="input-label">Branch</label>
+                    {branches.length === 0 ? (
+                      <div className="text-xs text-warning-600 mt-1 bg-warning-50 p-2.5 rounded-xl border border-warning-200 flex items-center gap-2">
+                        <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                        <span>Add branches in Branches first.</span>
+                      </div>
+                    ) : (
+                      <select className="select-field" value={form.BranchID} onChange={(e) => set('BranchID', e.target.value)} required>
+                        <option value="">Select Branch</option>
+                        {branches.map(b => <option key={b.BranchID} value={b.BranchID}>{b.BranchName}</option>)}
+                      </select>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="input-label">Fuel Policy</label>
+                    {policies.length === 0 ? (
+                      <div className="text-xs text-warning-600 mt-1 bg-warning-50 p-2.5 rounded-xl border border-warning-200 flex items-center gap-2">
+                        <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                        <span>Add fuel policies in Settings first.</span>
+                      </div>
+                    ) : (
+                      <select className="select-field" value={form.PolicyID} onChange={(e) => set('PolicyID', e.target.value)} required>
+                        <option value="">Select Policy</option>
+                        {policies.map(p => <option key={p.PolicyID} value={p.PolicyID}>{p.PolicyName}</option>)}
+                      </select>
+                    )}
+                  </div>
+                  <div>
+                    <label className="input-label">Image URL</label>
+                    <input type="url" placeholder="https://images.unsplash.com/..." className="input-field"
+                      value={form.ImageURL || ''} onChange={(e) => set('ImageURL', e.target.value)} />
+                  </div>
                 </div>
               </div>
 

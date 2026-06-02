@@ -7,11 +7,21 @@ dotenv.config();
 const pool = require('./src/lib/db');
 
 // ── Routes ──────────────────────────────────────────────
-const authRoutes     = require('./src/routes/authRoutes');
-const customerRoutes = require('./src/routes/customerRoutes');
-const carRoutes      = require('./src/routes/carRoutes');
-const bookingRoutes  = require('./src/routes/bookingRoutes');
-const rentalRoutes   = require('./src/routes/rentalRoutes');
+const authRoutes          = require('./src/routes/authRoutes');
+const customerRoutes      = require('./src/routes/customerRoutes');
+const carRoutes           = require('./src/routes/carRoutes');
+const bookingRoutes       = require('./src/routes/bookingRoutes');
+const rentalRoutes        = require('./src/routes/rentalRoutes');
+const branchRoutes        = require('./src/routes/branchRoutes');
+const categoryRoutes      = require('./src/routes/categoryRoutes');
+const fuelPolicyRoutes    = require('./src/routes/fuelPolicyRoutes');
+const paymentMethodRoutes = require('./src/routes/paymentMethodRoutes');
+const insuranceRoutes     = require('./src/routes/insuranceRoutes');
+const driverRoutes        = require('./src/routes/driverRoutes');
+const employeeRoutes      = require('./src/routes/employeeRoutes');
+const maintenanceRoutes   = require('./src/routes/maintenanceRoutes');
+const reviewRoutes        = require('./src/routes/reviewRoutes');
+const paymentRoutes       = require('./src/routes/paymentRoutes');
 
 // ── Auth middleware ──────────────────────────────────────
 const { requireAuth } = require('./src/middleware/auth');
@@ -66,11 +76,21 @@ app.get('/api', (_req, res) => {
 });
 
 // ── Mount routes ─────────────────────────────────────────
-app.use('/api/auth',      authRoutes);
-app.use('/api/customers', requireAuth, customerRoutes);
-app.use('/api/cars',      requireAuth, carRoutes);
-app.use('/api/bookings',  requireAuth, bookingRoutes);
-app.use('/api/rentals',   requireAuth, rentalRoutes);
+app.use('/api/auth',            authRoutes);
+app.use('/api/customers',       requireAuth, customerRoutes);
+app.use('/api/cars',            requireAuth, carRoutes);
+app.use('/api/bookings',        requireAuth, bookingRoutes);
+app.use('/api/rentals',         requireAuth, rentalRoutes);
+app.use('/api/branches',        requireAuth, branchRoutes);
+app.use('/api/categories',      requireAuth, categoryRoutes);
+app.use('/api/fuel-policies',   requireAuth, fuelPolicyRoutes);
+app.use('/api/payment-methods', requireAuth, paymentMethodRoutes);
+app.use('/api/insurances',      requireAuth, insuranceRoutes);
+app.use('/api/drivers',         requireAuth, driverRoutes);
+app.use('/api/employees',       requireAuth, employeeRoutes);
+app.use('/api/maintenance',     requireAuth, maintenanceRoutes);
+app.use('/api/reviews',         requireAuth, reviewRoutes);
+app.use('/api/payments',        requireAuth, paymentRoutes);
 
 // ── 404 ───────────────────────────────────────────────────
 app.use((req, res) => {

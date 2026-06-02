@@ -11,6 +11,14 @@ import Bookings from './pages/Bookings';
 import Customers from './pages/Customers';
 import Rentals from './pages/Rentals';
 import AdminsManagement from './pages/AdminsManagement';
+import Branches from './pages/Branches';
+import Employees from './pages/Employees';
+import Drivers from './pages/Drivers';
+import Maintenance from './pages/Maintenance';
+import InsuranceManagement from './pages/InsuranceManagement';
+import Payments from './pages/Payments';
+import Reviews from './pages/Reviews';
+import Settings from './pages/Settings';
 
 function App() {
   return (
@@ -59,6 +67,14 @@ function App() {
             <Route path="customers"  element={<Customers />}            />
             <Route path="rentals"    element={<Rentals />}              />
             <Route path="admins"     element={<AdminsManagement />}     />
+            <Route path="branches"   element={<Branches />}             />
+            <Route path="employees"  element={<Employees />}            />
+            <Route path="drivers"    element={<Drivers />}              />
+            <Route path="maintenance" element={<Maintenance />}          />
+            <Route path="insurances" element={<InsuranceManagement />}  />
+            <Route path="payments"   element={<Payments />}             />
+            <Route path="reviews"    element={<Reviews />}              />
+            <Route path="settings"   element={<Settings />}             />
           </Route>
 
           {/* Fallback */}

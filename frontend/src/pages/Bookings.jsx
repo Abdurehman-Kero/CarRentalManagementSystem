@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import bookingService from '../services/bookingService';
 import carService from '../services/carService';
 import customerService from '../services/customerService';
+import driverService from '../services/driverService';
+import insuranceService from '../services/insuranceService';
 import toast from 'react-hot-toast';
 import { useLocation } from 'react-router-dom';
 
@@ -41,6 +43,8 @@ const Bookings = () => {
   const [bookings, setBookings]       = useState([]);
   const [cars, setCars]               = useState([]);
   const [customers, setCustomers]     = useState([]);
+  const [drivers, setDrivers]         = useState([]);
+  const [insurances, setInsurances]   = useState([]);
   const [loading, setLoading]         = useState(true);
   const [showModal, setShowModal]     = useState(false);
   const [costCalc, setCostCalc]       = useState(null);
@@ -50,6 +54,7 @@ const Bookings = () => {
   const emptyForm = {
     BookingID: '', BookingDate: new Date().toISOString().split('T')[0],
     PickupDate: '', ReturnDate: '', CustID: '', CarID: '',
+    driverIds: [], insuranceIds: []
   };
   const [form, setForm] = useState(emptyForm);
   const location = useLocation();
@@ -65,14 +70,18 @@ const Bookings = () => {
 
   const fetchData = async () => {
     try {
-      const [bRes, cRes, cuRes] = await Promise.all([
+      const [bRes, cRes, cuRes, dRes, iRes] = await Promise.all([
         bookingService.getAllBookings(),
         carService.getAllCars(),
         customerService.getAllCustomers(),
+        driverService.getAllDrivers(),
+        insuranceService.getAllInsurances()
       ]);
       setBookings(Array.isArray(bRes) ? bRes : []);
       setCars(Array.isArray(cRes) ? cRes : []);
       setCustomers(Array.isArray(cuRes) ? cuRes : []);
+      setDrivers(Array.isArray(dRes) ? dRes : []);
+      setInsurances(Array.isArray(iRes) ? iRes : []);
     } catch { toast.error('Failed to load bookings data'); }
     finally { setLoading(false); }
   };
@@ -90,6 +99,7 @@ const Bookings = () => {
         CarID: parseInt(form.CarID),
         PickupDate: form.PickupDate,
         ReturnDate: form.ReturnDate,
+        insuranceIds: form.insuranceIds.map(id => parseInt(id)),
       });
       setCostCalc(res);
     } catch (e) { toast.error(e?.error || 'Failed to calculate cost'); }
@@ -107,6 +117,8 @@ const Bookings = () => {
         ReturnDate:  form.ReturnDate,
         CustID:      parseInt(form.CustID),
         CarID:       parseInt(form.CarID),
+        driverIds:   form.driverIds.map(id => parseInt(id)),
+        insuranceIds: form.insuranceIds.map(id => parseInt(id)),
       });
       toast.success('Booking created successfully!');
       closeModal(); fetchData();
@@ -241,6 +253,47 @@ const Bookings = () => {
                     <label className="input-label">Return Date</label>
                     <input id="return-date" type="date" className="input-field"
                       value={form.ReturnDate} onChange={(e) => set('ReturnDate', e.target.value)} required />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="input-label">Assigned Drivers (Optional)</label>
+                    <div className="space-y-1 mt-1 max-h-32 overflow-y-auto p-2 border border-surface-200 rounded-xl bg-surface-50">
+                      {drivers.map(d => (
+                        <label key={d.DriverID} className="flex items-center gap-2 text-sm text-surface-700 cursor-pointer">
+                          <input type="checkbox" className="rounded text-primary-500 focus:ring-primary-500"
+                            checked={form.driverIds.includes(d.DriverID)}
+                            onChange={(e) => {
+                              const ids = e.target.checked 
+                                ? [...form.driverIds, d.DriverID] 
+                                : form.driverIds.filter(id => id !== d.DriverID);
+                              set('driverIds', ids);
+                            }} />
+                          {d.FullName}
+                        </label>
+                      ))}
+                      {drivers.length === 0 && <span className="text-xs text-surface-400">No drivers available</span>}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="input-label">Insurance (Optional)</label>
+                    <div className="space-y-1 mt-1 max-h-32 overflow-y-auto p-2 border border-surface-200 rounded-xl bg-surface-50">
+                      {insurances.map(i => (
+                        <label key={i.InsuranceID} className="flex items-center gap-2 text-sm text-surface-700 cursor-pointer">
+                          <input type="checkbox" className="rounded text-primary-500 focus:ring-primary-500"
+                            checked={form.insuranceIds.includes(i.InsuranceID)}
+                            onChange={(e) => {
+                              const ids = e.target.checked 
+                                ? [...form.insuranceIds, i.InsuranceID] 
+                                : form.insuranceIds.filter(id => id !== i.InsuranceID);
+                              set('insuranceIds', ids);
+                            }} />
+                          {i.InsuranceType} (+${i.Cost})
+                        </label>
+                      ))}
+                      {insurances.length === 0 && <span className="text-xs text-surface-400">No insurance available</span>}
+                    </div>
                   </div>
                 </div>
 

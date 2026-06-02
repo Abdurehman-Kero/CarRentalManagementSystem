@@ -37,7 +37,29 @@ const getBookingById = async (req, res) => {
     `, [req.params.id]);
     if (!rows.length)
       return res.status(404).json({ success: false, error: 'Booking not found' });
-    res.json({ success: true, data: rows[0] });
+
+    // Fetch assigned drivers
+    const [drivers] = await pool.query(
+      `SELECT d.DriverID, d.FullName, d.LicenseNumber, d.Phone
+       FROM BookingDriver bd JOIN Driver d ON bd.DriverID = d.DriverID
+       WHERE bd.BookingID = ?`, [req.params.id]
+    );
+
+    // Fetch attached insurances
+    const [insurances] = await pool.query(
+      `SELECT i.InsuranceID, i.InsuranceType, i.Cost
+       FROM BookingInsurance bi JOIN Insurance i ON bi.InsuranceID = i.InsuranceID
+       WHERE bi.BookingID = ?`, [req.params.id]
+    );
+
+    // Fetch payments
+    const [payments] = await pool.query(
+      `SELECT p.*, pm.MethodType
+       FROM Payment p LEFT JOIN PaymentMethod pm ON p.MethodID = pm.MethodID
+       WHERE p.BookingID = ? ORDER BY p.PaymentDate DESC`, [req.params.id]
+    );
+
+    res.json({ success: true, data: { ...rows[0], drivers, insurances, payments } });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
@@ -46,7 +68,8 @@ const getBookingById = async (req, res) => {
 // ── Create booking ───────────────────────────────────────────────
 const createBooking = async (req, res) => {
   try {
-    const { BookingID, BookingDate, PickupDate, ReturnDate, CustID, CarID } = req.body;
+    const { BookingID, BookingDate, PickupDate, ReturnDate, CustID, CarID,
+            driverIds = [], insuranceIds = [] } = req.body;
 
     const [carRows] = await pool.query('SELECT * FROM Car WHERE CarID = ?', [CarID]);
     if (!carRows.length)
@@ -60,6 +83,22 @@ const createBooking = async (req, res) => {
       [parseInt(BookingID), new Date(BookingDate), new Date(PickupDate), new Date(ReturnDate),
        parseInt(CustID), parseInt(CarID)]
     );
+
+    // Insert booking drivers
+    for (const driverId of driverIds) {
+      await pool.query(
+        'INSERT IGNORE INTO BookingDriver (BookingID, DriverID) VALUES (?, ?)',
+        [parseInt(BookingID), parseInt(driverId)]
+      );
+    }
+
+    // Insert booking insurances
+    for (const insuranceId of insuranceIds) {
+      await pool.query(
+        'INSERT IGNORE INTO BookingInsurance (BookingID, InsuranceID) VALUES (?, ?)',
+        [parseInt(BookingID), parseInt(insuranceId)]
+      );
+    }
 
     const [booking] = await pool.query(`
       SELECT b.*, c.FullName AS CustomerName, ca.Brand, ca.Model
@@ -92,7 +131,7 @@ const updateBookingStatus = async (req, res) => {
 // ── Calculate cost ───────────────────────────────────────────────
 const calculateCost = async (req, res) => {
   try {
-    const { CarID, PickupDate, ReturnDate } = req.body;
+    const { CarID, PickupDate, ReturnDate, insuranceIds = [] } = req.body;
     const [carRows] = await pool.query(`
       SELECT c.*, cat.PricePerDay
       FROM Car c LEFT JOIN Category cat ON c.CategoryID = cat.CategoryID
@@ -101,15 +140,91 @@ const calculateCost = async (req, res) => {
     if (!carRows.length)
       return res.status(404).json({ success: false, error: 'Car not found' });
 
-    const car        = carRows[0];
+    const car         = carRows[0];
     const pricePerDay = parseFloat(car.PricePerDay || car.DailyRate || 0);
-    const days       = Math.max(1, Math.ceil((new Date(ReturnDate) - new Date(PickupDate)) / 86400000));
-    const totalCost  = parseFloat((pricePerDay * days).toFixed(2));
+    const days        = Math.max(1, Math.ceil((new Date(ReturnDate) - new Date(PickupDate)) / 86400000));
+    const carCost     = parseFloat((pricePerDay * days).toFixed(2));
 
-    res.json({ success: true, data: { days, pricePerDay, totalCost } });
+    let insuranceCost = 0;
+    if (insuranceIds.length) {
+      const [ins] = await pool.query(
+        `SELECT SUM(Cost) AS TotalInsurance FROM Insurance WHERE InsuranceID IN (?)`,
+        [insuranceIds]
+      );
+      insuranceCost = parseFloat(ins[0].TotalInsurance || 0);
+    }
+
+    const totalCost = parseFloat((carCost + insuranceCost).toFixed(2));
+    res.json({ success: true, data: { days, pricePerDay, carCost, insuranceCost, totalCost } });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
 };
 
-module.exports = { getAllBookings, getBookingById, createBooking, updateBookingStatus, calculateCost };
+// ── Assign driver to booking ─────────────────────────────────────
+const addDriverToBooking = async (req, res) => {
+  try {
+    const { id: BookingID } = req.params;
+    const { DriverID } = req.body;
+    if (!DriverID)
+      return res.status(400).json({ success: false, error: 'DriverID is required' });
+    await pool.query(
+      'INSERT IGNORE INTO BookingDriver (BookingID, DriverID) VALUES (?, ?)',
+      [parseInt(BookingID), parseInt(DriverID)]
+    );
+    res.json({ success: true, message: 'Driver assigned to booking' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+};
+
+// ── Remove driver from booking ───────────────────────────────────
+const removeDriverFromBooking = async (req, res) => {
+  try {
+    const { id: BookingID, driverId: DriverID } = req.params;
+    await pool.query(
+      'DELETE FROM BookingDriver WHERE BookingID = ? AND DriverID = ?',
+      [BookingID, DriverID]
+    );
+    res.json({ success: true, message: 'Driver removed from booking' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+};
+
+// ── Attach insurance to booking ──────────────────────────────────
+const addInsuranceToBooking = async (req, res) => {
+  try {
+    const { id: BookingID } = req.params;
+    const { InsuranceID } = req.body;
+    if (!InsuranceID)
+      return res.status(400).json({ success: false, error: 'InsuranceID is required' });
+    await pool.query(
+      'INSERT IGNORE INTO BookingInsurance (BookingID, InsuranceID) VALUES (?, ?)',
+      [parseInt(BookingID), parseInt(InsuranceID)]
+    );
+    res.json({ success: true, message: 'Insurance attached to booking' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+};
+
+// ── Remove insurance from booking ────────────────────────────────
+const removeInsuranceFromBooking = async (req, res) => {
+  try {
+    const { id: BookingID, insuranceId: InsuranceID } = req.params;
+    await pool.query(
+      'DELETE FROM BookingInsurance WHERE BookingID = ? AND InsuranceID = ?',
+      [BookingID, InsuranceID]
+    );
+    res.json({ success: true, message: 'Insurance removed from booking' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+};
+
+module.exports = {
+  getAllBookings, getBookingById, createBooking, updateBookingStatus, calculateCost,
+  addDriverToBooking, removeDriverFromBooking,
+  addInsuranceToBooking, removeInsuranceFromBooking,
+};

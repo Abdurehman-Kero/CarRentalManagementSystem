@@ -5,6 +5,8 @@ import carService      from '../services/carService';
 import customerService from '../services/customerService';
 import bookingService  from '../services/bookingService';
 import rentalService   from '../services/rentalService';
+import reviewService   from '../services/reviewService';
+import paymentService  from '../services/paymentService';
 import { useAuth } from '../context/AuthContext';
 
 /* ── Stat Card ────────────────────────────────────────────────────── */
@@ -55,7 +57,7 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { admin } = useAuth();
   const [stats, setStats] = useState({
-    totalRentals: 0, availableCars: 0, totalCustomers: 0, revenue: 0, maintenanceCars: 0, pendingBookings: 0, latestBookingText: '', loading: true,
+    totalRentals: 0, availableCars: 0, totalCustomers: 0, revenue: 0, avgRating: 0, maintenanceCars: 0, pendingBookings: 0, latestBookingText: '', loading: true,
   });
   const [recentBookings, setRecentBookings] = useState([]);
   const [loadingBookings, setLoadingBookings] = useState(true);
@@ -63,23 +65,33 @@ const Dashboard = () => {
   useEffect(() => {
     const load = async () => {
       try {
-        const [cars, customers, bookings, rentals] = await Promise.all([
+        const [cars, customers, bookings, rentals, reviews, payments] = await Promise.all([
           carService.getAllCars(),
           customerService.getAllCustomers(),
           bookingService.getAllBookings(),
           rentalService.getAllRentals(),
+          reviewService.getAllReviews(),
+          paymentService.getAllPayments(),
         ]);
 
         const carsArr      = Array.isArray(cars)      ? cars      : [];
         const customersArr = Array.isArray(customers)  ? customers : [];
         const bookingsArr  = Array.isArray(bookings)   ? bookings  : [];
         const rentalsArr   = Array.isArray(rentals)    ? rentals   : [];
+        const reviewsArr   = Array.isArray(reviews)    ? reviews   : [];
+        const paymentsArr  = Array.isArray(payments)   ? payments  : [];
 
         const available   = carsArr.filter(c => c.Status === 'Available').length;
         const maintenance = carsArr.filter(c => c.Status === 'Maintenance').length;
         const pendingBook  = bookingsArr.filter(b => b.Status === 'Pending').length;
         const activeRents = rentalsArr.filter(r => !r.ActualReturnDate).length;
-        const revenue     = rentalsArr.reduce((s, r) => s + parseFloat(r.TotalAmount || 0), 0);
+        
+        const revenue     = paymentsArr.reduce((s, p) => s + parseFloat(p.Amount || 0), 0);
+        
+        let avgRating = 0;
+        if (reviewsArr.length > 0) {
+          avgRating = (reviewsArr.reduce((s, r) => s + (r.Rating || 0), 0) / reviewsArr.length).toFixed(1);
+        }
 
         let latestBookingText = 'No recent reservations';
         if (bookingsArr.length > 0) {
@@ -97,6 +109,7 @@ const Dashboard = () => {
           availableCars:  available,
           totalCustomers: customersArr.length,
           revenue:        Math.round(revenue),
+          avgRating,
           maintenanceCars: maintenance,
           pendingBookings: pendingBook,
           latestBookingText,
@@ -154,12 +167,21 @@ const Dashboard = () => {
       </svg>,
     },
     {
-      title: 'Monthly Revenue',
+      title: 'Total Revenue',
       value: `$${stats.revenue.toLocaleString()}`,
       gradient: 'bg-gradient-warning',
       icon: <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
           d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+      </svg>,
+    },
+    {
+      title: 'Avg Rating',
+      value: `${stats.avgRating} ★`,
+      gradient: 'bg-gradient-primary',
+      icon: <svg className="w-6 h-6 text-surface-950" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
+          d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
       </svg>,
     },
   ];
@@ -181,7 +203,7 @@ const Dashboard = () => {
       </div>
 
       {/* Stat cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
         {statCards.map((s) => (
           <StatCard key={s.title} {...s} loading={stats.loading} />
         ))}

@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import rentalService from '../services/rentalService';
 import bookingService from '../services/bookingService';
 import carService from '../services/carService';
+import paymentService from '../services/paymentService';
+import paymentMethodService from '../services/paymentMethodService';
 import toast from 'react-hot-toast';
 import ConfirmModal from '../components/ConfirmModal';
 
@@ -36,6 +38,11 @@ const Rentals = () => {
   const [submitting, setSubmitting]         = useState(false);
   const [confirmReturn, setConfirmReturn]   = useState(null); // { rentalId, bookingId, carId }
 
+  const [methods, setMethods]               = useState([]);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentForm, setPaymentForm]       = useState({ PaymentID: '', Amount: '', MethodID: '' });
+  const [activeRentalForPayment, setActiveRentalForPayment] = useState(null);
+
   const emptyForm = {
     RentalID: '', StartDate: new Date().toISOString().split('T')[0],
     EndDate: '', TotalAmount: '', BookingID: '',
@@ -47,13 +54,15 @@ const Rentals = () => {
 
   const fetchData = async () => {
     try {
-      const [rRes, bRes] = await Promise.all([
+      const [rRes, bRes, mRes] = await Promise.all([
         rentalService.getAllRentals(),
         bookingService.getAllBookings(),
+        paymentMethodService.getAllPaymentMethods(),
       ]);
       setRentals(Array.isArray(rRes) ? rRes : []);
       const pending = (Array.isArray(bRes) ? bRes : []).filter((b) => b.Status === 'Pending' && !b.RentalID);
       setPendingBookings(pending);
+      setMethods(Array.isArray(mRes) ? mRes : []);
     } catch { toast.error('Failed to fetch rentals data'); }
     finally { setLoading(false); }
   };
@@ -107,6 +116,30 @@ const Rentals = () => {
       toast.success('Car returned successfully!');
       fetchData();
     } catch { toast.error('Failed to return car'); }
+  };
+
+  const openPaymentModal = (rental) => {
+    setActiveRentalForPayment(rental);
+    setPaymentForm({ PaymentID: '', Amount: rental.TotalAmount || '', MethodID: '' });
+    setShowPaymentModal(true);
+  };
+
+  const handlePaymentSubmit = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+    try {
+      await paymentService.createPayment({
+        PaymentID: parseInt(paymentForm.PaymentID),
+        BookingID: activeRentalForPayment.BookingID,
+        Amount: parseFloat(paymentForm.Amount),
+        PaymentDate: new Date().toISOString().split('T')[0],
+        Status: 'Completed',
+        MethodID: parseInt(paymentForm.MethodID),
+      });
+      toast.success('Payment recorded successfully!');
+      setShowPaymentModal(false);
+    } catch (e) { toast.error(e?.error || 'Failed to record payment'); }
+    finally { setSubmitting(false); }
   };
 
   const closeModal = () => { setShowModal(false); setForm(emptyForm); };
@@ -213,13 +246,19 @@ const Rentals = () => {
                       )}
                     </td>
                     <td>
-                      {!r.ActualReturnDate && (
-                        <button id={`return-car-${r.RentalID}`}
-                          onClick={() => handleReturn(r.RentalID, r.BookingID, r.CarID)}
-                          className="btn-xs bg-primary-500/10 text-primary-400 hover:bg-primary-500/20 border border-primary-500/20 rounded-xl font-bold transition-all">
-                          ↩ Return
+                      <div className="flex items-center gap-1">
+                        {!r.ActualReturnDate && (
+                          <button id={`return-car-${r.RentalID}`}
+                            onClick={() => handleReturn(r.RentalID, r.BookingID, r.CarID)}
+                            className="btn-xs bg-primary-500/10 text-primary-400 hover:bg-primary-500/20 border border-primary-500/20 rounded-xl font-bold transition-all">
+                            ↩ Return
+                          </button>
+                        )}
+                        <button onClick={() => openPaymentModal(r)}
+                          className="btn-xs bg-success-500/10 text-success-500 hover:bg-success-500/20 border border-success-500/20 rounded-xl font-bold transition-all">
+                          $ Pay
                         </button>
-                      )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -324,6 +363,56 @@ const Rentals = () => {
           </svg>
         }
       />
+
+      {/* Payment Modal */}
+      {showPaymentModal && (
+        <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && setShowPaymentModal(false)}>
+          <div className="modal-box max-w-sm">
+            <div className="modal-header">
+              <div>
+                <h2 className="text-lg font-bold text-surface-900">Record Payment</h2>
+                <p className="text-xs text-surface-400 mt-0.5">Booking #{activeRentalForPayment?.BookingID}</p>
+              </div>
+              <CloseBtn onClick={() => setShowPaymentModal(false)} />
+            </div>
+
+            <form onSubmit={handlePaymentSubmit}>
+              <div className="modal-body space-y-4">
+                <div>
+                  <label className="input-label">Payment ID</label>
+                  <input type="number" placeholder="Unique ID" className="input-field"
+                    value={paymentForm.PaymentID} onChange={e => setPaymentForm(p => ({...p, PaymentID: e.target.value}))} required />
+                </div>
+                <div>
+                  <label className="input-label">Amount ($)</label>
+                  <input type="number" step="0.01" className="input-field tabular"
+                    value={paymentForm.Amount} onChange={e => setPaymentForm(p => ({...p, Amount: e.target.value}))} required />
+                </div>
+                <div>
+                  <label className="input-label">Method</label>
+                  {methods.length === 0 ? (
+                    <div className="text-xs text-warning-600 mt-1 bg-warning-50 p-2.5 rounded-xl border border-warning-200 flex items-center gap-2">
+                      <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                      <span>No payment methods found. Please add them in Settings.</span>
+                    </div>
+                  ) : (
+                    <select className="select-field" value={paymentForm.MethodID} onChange={e => setPaymentForm(p => ({...p, MethodID: e.target.value}))} required>
+                      <option value="">Select Method</option>
+                      {methods.map(m => <option key={m.MethodID} value={m.MethodID}>{m.MethodType}</option>)}
+                    </select>
+                  )}
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button type="button" onClick={() => setShowPaymentModal(false)} className="btn-secondary">Cancel</button>
+                <button type="submit" className="btn-primary" disabled={submitting}>
+                  {submitting ? 'Saving…' : 'Save Payment'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
