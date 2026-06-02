@@ -265,15 +265,15 @@ const Bookings = () => {
                     <div className="p-4 space-y-2">
                       <div className="flex justify-between text-sm">
                         <span className="text-surface-400">Duration</span>
-                        <span className="font-semibold text-white">{costCalc.days} days</span>
+                        <span className="font-semibold text-surface-900">{costCalc.days} days</span>
                       </div>
                       <div className="flex justify-between text-sm">
                         <span className="text-surface-400">Daily rate</span>
-                        <span className="font-semibold text-white">${costCalc.pricePerDay}</span>
+                        <span className="font-semibold text-surface-900">${costCalc.pricePerDay}</span>
                       </div>
                       <div className="divider" />
                       <div className="flex justify-between">
-                        <span className="font-bold text-white">Total</span>
+                        <span className="font-bold text-surface-900">Total</span>
                         <span className="text-xl font-bold text-primary-400">${costCalc.totalCost}</span>
                       </div>
                     </div>
