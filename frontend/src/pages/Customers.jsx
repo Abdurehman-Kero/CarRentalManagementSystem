@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import customerService from '../services/customerService';
 import toast from 'react-hot-toast';
 import { useLocation } from 'react-router-dom';
+import ConfirmModal from '../components/ConfirmModal';
 
 /* ── Helpers ──────────────────────────────────────────────────────── */
 const Spinner = () => (
@@ -42,6 +43,7 @@ const Customers = () => {
   const [editingCustomer, setEdit]  = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [search, setSearch]         = useState('');
+  const [confirmDelete, setConfirmDelete] = useState(null); // customer id to delete
 
   const emptyForm = {
     CustID: '', FullName: '', Email: '', Phone: '',
@@ -86,12 +88,18 @@ const Customers = () => {
 
   const handleEdit = (c) => { setEdit(c); setForm({ ...c }); setShowModal(true); };
 
-  const handleDelete = async (id, hasBookings) => {
+  const handleDelete = (id, hasBookings) => {
     if (hasBookings) { toast.error('Cannot delete customer with active bookings'); return; }
-    if (!window.confirm('Delete this customer? This cannot be undone.')) return;
+    setConfirmDelete(id);
+  };
+
+  const doDelete = async () => {
+    const id = confirmDelete;
+    setConfirmDelete(null);
     try {
       await customerService.deleteCustomer(id);
-      toast.success('Customer deleted'); fetchCustomers();
+      toast.success('Customer deleted');
+      fetchCustomers();
     } catch { toast.error('Failed to delete customer'); }
   };
 
@@ -303,6 +311,18 @@ const Customers = () => {
           </div>
         </div>
       )}
+
+      {/* Delete Customer Confirmation */}
+      <ConfirmModal
+        open={!!confirmDelete}
+        variant="danger"
+        title="Delete Customer"
+        message="This will permanently delete the customer and all their data. This action cannot be undone."
+        confirmText="Yes, Delete"
+        cancelText="Keep Customer"
+        onConfirm={doDelete}
+        onCancel={() => setConfirmDelete(null)}
+      />
     </div>
   );
 };
