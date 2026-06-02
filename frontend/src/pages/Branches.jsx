@@ -46,7 +46,7 @@ const Branches = () => {
   const [search, setSearch]         = useState('');
   const [confirmDelete, setConfirmDelete] = useState(null);
 
-  const emptyForm = { BranchID: '', BranchName: '', City: '', State: '', Phone: '' };
+  const emptyForm = { BranchID: '', BranchName: '', LocationCity: '', LocationState: '', Phone: '' };
   const [form, setForm] = useState(emptyForm);
   const set = (k, v) => setForm((p) => ({ ...p, [k]: v }));
 
@@ -96,8 +96,8 @@ const Branches = () => {
     const q = search.toLowerCase();
     return (
       b.BranchName?.toLowerCase().includes(q) ||
-      b.City?.toLowerCase().includes(q) ||
-      b.State?.toLowerCase().includes(q) ||
+      b.LocationCity?.toLowerCase().includes(q) ||
+      b.LocationState?.toLowerCase().includes(q) ||
       b.Phone?.includes(q)
     );
   });
@@ -177,8 +177,8 @@ const Branches = () => {
                       </div>
                     </td>
                     <td>
-                      <p className="text-sm text-surface-700">{b.City}</p>
-                      <p className="text-xs text-surface-400">{b.State}</p>
+                      <p className="text-sm text-surface-700">{b.LocationCity}</p>
+                      <p className="text-xs text-surface-400">{b.LocationState}</p>
                     </td>
                     <td>
                       <p className="text-sm text-surface-700 tabular">{b.Phone}</p>
@@ -234,12 +234,12 @@ const Branches = () => {
                   <div>
                     <label className="input-label">City</label>
                     <input type="text" placeholder="City" className="input-field"
-                      value={form.City} onChange={(e) => set('City', e.target.value)} required />
+                      value={form.LocationCity} onChange={(e) => set('LocationCity', e.target.value)} required />
                   </div>
                   <div>
                     <label className="input-label">State</label>
                     <input type="text" placeholder="NY" className="input-field"
-                      value={form.State} onChange={(e) => set('State', e.target.value)} required />
+                      value={form.LocationState} onChange={(e) => set('LocationState', e.target.value)} required />
                   </div>
                 </div>
                 <div>
