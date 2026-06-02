@@ -1,17 +1,13 @@
 import api from './api';
 
-export const rentalService = {
-  // Get all rentals
-  getAllRentals: () => api.get('/rentals'),
-  
-  // Get rental by ID
-  getRentalById: (id) => api.get(`/rentals/${id}`),
-  
-  // Create rental (checkout)
-  createRental: (rentalData) => api.post('/rentals', rentalData),
-  
-  // Return car
-  returnCar: (id, actualReturnDate) => api.put(`/rentals/${id}/return`, { ActualReturnDate: actualReturnDate }),
+const extract    = (res) => res.data?.data ?? res.data ?? [];
+const extractOne = (res) => res.data?.data ?? res.data ?? null;
+
+const rentalService = {
+  getAllRentals:  ()         => api.get('/rentals').then(extract),
+  getRentalById: (id)       => api.get(`/rentals/${id}`).then(extractOne),
+  createRental:  (data)     => api.post('/rentals', data).then(extractOne),
+  returnCar:     (id, date) => api.put(`/rentals/${id}/return`, { ActualReturnDate: date }).then(extractOne),
 };
 
 export default rentalService;
