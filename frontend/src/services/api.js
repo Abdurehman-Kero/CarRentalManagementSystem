@@ -55,12 +55,16 @@ api.interceptors.response.use(
           errorMessage = data.message || 'Bad request - please check your input';
           break;
         case 401:
-          errorMessage = 'Unauthorized - please log in again';
-          // Clear auth token on 401
-          localStorage.removeItem('authToken');
-          // Redirect to login page
-          if (window.location.pathname !== '/login') {
-            window.location.href = '/login';
+          if (error.config?.url?.includes('/auth/login')) {
+            errorMessage = data.error || data.message || 'Invalid email or password';
+          } else {
+            errorMessage = 'Unauthorized - please log in again';
+            // Clear auth token on 401
+            localStorage.removeItem('authToken');
+            // Redirect to login page
+            if (window.location.pathname !== '/login') {
+              window.location.href = '/login';
+            }
           }
           break;
         case 403:
@@ -89,8 +93,10 @@ api.interceptors.response.use(
       errorMessage = error.message || 'Request configuration error';
     }
     
-    // Show error toast notification
-    toast.error(errorMessage);
+    // Show error toast notification, but skip for login errors so we can handle them inline
+    if (!error.config?.url?.includes('/auth/login')) {
+      toast.error(errorMessage);
+    }
     
     // Log error in development
     if (process.env.NODE_ENV === 'development') {
