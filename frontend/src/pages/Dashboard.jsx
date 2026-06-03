@@ -1,36 +1,42 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import toast from 'react-hot-toast';
-import carService      from '../services/carService';
-import customerService from '../services/customerService';
-import bookingService  from '../services/bookingService';
-import rentalService   from '../services/rentalService';
-import reviewService   from '../services/reviewService';
-import paymentService  from '../services/paymentService';
-import { useAuth } from '../context/AuthContext';
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
+import carService from "../services/carService";
+import customerService from "../services/customerService";
+import bookingService from "../services/bookingService";
+import rentalService from "../services/rentalService";
+import reviewService from "../services/reviewService";
+import paymentService from "../services/paymentService";
+import { useAuth } from "../context/AuthContext";
 
 /* ── Stat Card ────────────────────────────────────────────────────── */
 const StatCard = ({ title, value, icon, gradient, delta, loading }) => (
-  <div className="card-hover p-5 flex flex-col gap-4 group">
+  <div className="card-hover p-4 sm:p-5 flex flex-col gap-4 group">
     <div className="flex items-start justify-between">
-      <div className={`stat-icon-box ${gradient}`}>
-        {icon}
-      </div>
+      <div className={`stat-icon-box ${gradient}`}>{icon}</div>
       {delta !== undefined && (
-        <span className={`inline-flex items-center gap-0.5 text-xs font-semibold px-2.5 py-0.5 rounded-full
-          ${delta >= 0
-            ? 'bg-success-50/20 text-success-500 ring-1 ring-success-500/20'
-            : 'bg-danger-50/20 text-danger-400 ring-1 ring-danger-500/20'}`}>
-          {delta >= 0 ? '↑' : '↓'} {Math.abs(delta)}%
+        <span
+          className={`inline-flex items-center gap-0.5 text-[11px] sm:text-xs font-semibold px-2 py-0.5 rounded-full
+          ${
+            delta >= 0
+              ? "bg-success-50/20 text-success-500 ring-1 ring-success-500/20"
+              : "bg-danger-50/20 text-danger-400 ring-1 ring-danger-500/20"
+          }`}
+        >
+          {delta >= 0 ? "↑" : "↓"} {Math.abs(delta)}%
         </span>
       )}
     </div>
     <div>
-      <p className="text-xs font-bold text-surface-400 uppercase tracking-widest mb-1.5">{title}</p>
+      <p className="text-[11px] sm:text-xs font-bold text-surface-400 uppercase tracking-widest mb-1.5">
+        {title}
+      </p>
       {loading ? (
         <div className="h-8 w-28 skeleton" />
       ) : (
-        <p className="text-3xl font-bold text-surface-900 tracking-tight">{value}</p>
+        <p className="text-2xl sm:text-3xl font-bold text-surface-900 tracking-tight">
+          {value}
+        </p>
       )}
     </div>
   </div>
@@ -39,13 +45,13 @@ const StatCard = ({ title, value, icon, gradient, delta, loading }) => (
 /* ── Status badge ─────────────────────────────────────────────────── */
 const StatusBadge = ({ status }) => {
   const map = {
-    Active:    'badge-green',
-    Completed: 'badge-blue',
-    Pending:   'badge-yellow',
-    Cancelled: 'badge-red',
+    Active: "badge-green",
+    Completed: "badge-blue",
+    Pending: "badge-yellow",
+    Cancelled: "badge-red",
   };
   return (
-    <span className={map[status] || 'badge-gray'}>
+    <span className={map[status] || "badge-gray"}>
       <span className="w-1.5 h-1.5 rounded-full bg-current opacity-60" />
       {status}
     </span>
@@ -57,7 +63,15 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { admin } = useAuth();
   const [stats, setStats] = useState({
-    totalRentals: 0, availableCars: 0, totalCustomers: 0, revenue: 0, avgRating: 0, maintenanceCars: 0, pendingBookings: 0, latestBookingText: '', loading: true,
+    totalRentals: 0,
+    availableCars: 0,
+    totalCustomers: 0,
+    revenue: 0,
+    avgRating: 0,
+    maintenanceCars: 0,
+    pendingBookings: 0,
+    latestBookingText: "",
+    loading: true,
   });
   const [recentBookings, setRecentBookings] = useState([]);
   const [loadingBookings, setLoadingBookings] = useState(true);
@@ -65,72 +79,96 @@ const Dashboard = () => {
   useEffect(() => {
     const load = async () => {
       try {
-        const [cars, customers, bookings, rentals, reviews, payments] = await Promise.all([
-          carService.getAllCars(),
-          customerService.getAllCustomers(),
-          bookingService.getAllBookings(),
-          rentalService.getAllRentals(),
-          reviewService.getAllReviews(),
-          paymentService.getAllPayments(),
-        ]);
+        const [cars, customers, bookings, rentals, reviews, payments] =
+          await Promise.all([
+            carService.getAllCars(),
+            customerService.getAllCustomers(),
+            bookingService.getAllBookings(),
+            rentalService.getAllRentals(),
+            reviewService.getAllReviews(),
+            paymentService.getAllPayments(),
+          ]);
 
-        const carsArr      = Array.isArray(cars)      ? cars      : [];
-        const customersArr = Array.isArray(customers)  ? customers : [];
-        const bookingsArr  = Array.isArray(bookings)   ? bookings  : [];
-        const rentalsArr   = Array.isArray(rentals)    ? rentals   : [];
-        const reviewsArr   = Array.isArray(reviews)    ? reviews   : [];
-        const paymentsArr  = Array.isArray(payments)   ? payments  : [];
+        const carsArr = Array.isArray(cars) ? cars : [];
+        const customersArr = Array.isArray(customers) ? customers : [];
+        const bookingsArr = Array.isArray(bookings) ? bookings : [];
+        const rentalsArr = Array.isArray(rentals) ? rentals : [];
+        const reviewsArr = Array.isArray(reviews) ? reviews : [];
+        const paymentsArr = Array.isArray(payments) ? payments : [];
 
-        const available   = carsArr.filter(c => c.Status === 'Available').length;
-        const maintenance = carsArr.filter(c => c.Status === 'Maintenance').length;
-        const pendingBook  = bookingsArr.filter(b => b.Status === 'Pending').length;
-        const activeRents = rentalsArr.filter(r => !r.ActualReturnDate).length;
-        
-        const revenue     = paymentsArr.reduce((s, p) => s + parseFloat(p.Amount || 0), 0);
-        
+        const available = carsArr.filter(
+          (c) => c.Status === "Available",
+        ).length;
+        const maintenance = carsArr.filter(
+          (c) => c.Status === "Maintenance",
+        ).length;
+        const pendingBook = bookingsArr.filter(
+          (b) => b.Status === "Pending",
+        ).length;
+        const activeRents = rentalsArr.filter(
+          (r) => !r.ActualReturnDate,
+        ).length;
+
+        const revenue = paymentsArr.reduce(
+          (s, p) => s + parseFloat(p.Amount || 0),
+          0,
+        );
+
         let avgRating = 0;
         if (reviewsArr.length > 0) {
-          avgRating = (reviewsArr.reduce((s, r) => s + (r.Rating || 0), 0) / reviewsArr.length).toFixed(1);
+          avgRating = (
+            reviewsArr.reduce((s, r) => s + (r.Rating || 0), 0) /
+            reviewsArr.length
+          ).toFixed(1);
         }
 
-        let latestBookingText = 'No recent reservations';
+        let latestBookingText = "No recent reservations";
         if (bookingsArr.length > 0) {
-          const sorted = [...bookingsArr].sort((a, b) => new Date(b.BookingDate) - new Date(a.BookingDate));
+          const sorted = [...bookingsArr].sort(
+            (a, b) => new Date(b.BookingDate) - new Date(a.BookingDate),
+          );
           const latest = sorted[0];
           const diffMs = new Date() - new Date(latest.BookingDate);
           const diffMins = Math.round(diffMs / 60000);
-          if (diffMins < 60) latestBookingText = `Received ${diffMins} minutes ago`;
-          else if (diffMins < 1440) latestBookingText = `Received ${Math.round(diffMins / 60)} hours ago`;
-          else latestBookingText = `Received ${Math.round(diffMins / 1440)} days ago`;
+          if (diffMins < 60)
+            latestBookingText = `Received ${diffMins} minutes ago`;
+          else if (diffMins < 1440)
+            latestBookingText = `Received ${Math.round(diffMins / 60)} hours ago`;
+          else
+            latestBookingText = `Received ${Math.round(diffMins / 1440)} days ago`;
         }
 
         setStats({
-          totalRentals:   activeRents,
-          availableCars:  available,
+          totalRentals: activeRents,
+          availableCars: available,
           totalCustomers: customersArr.length,
-          revenue:        Math.round(revenue),
+          revenue: Math.round(revenue),
           avgRating,
           maintenanceCars: maintenance,
           pendingBookings: pendingBook,
           latestBookingText,
-          loading:        false,
+          loading: false,
         });
 
         // 5 most recent bookings
         setRecentBookings(
-          bookingsArr.slice(0, 5).map(b => ({
-            id:           b.BookingID,
-            customerName: b.CustomerName || 'N/A',
-            carModel:     `${b.Brand || ''} ${b.Model || ''}`.trim() || 'N/A',
-            startDate:    b.PickupDate ? new Date(b.PickupDate).toLocaleDateString() : 'N/A',
-            endDate:      b.ReturnDate ? new Date(b.ReturnDate).toLocaleDateString() : 'N/A',
-            status:       b.Status,
-            amount:       b.TotalAmount || 0,
-          }))
+          bookingsArr.slice(0, 5).map((b) => ({
+            id: b.BookingID,
+            customerName: b.CustomerName || "N/A",
+            carModel: `${b.Brand || ""} ${b.Model || ""}`.trim() || "N/A",
+            startDate: b.PickupDate
+              ? new Date(b.PickupDate).toLocaleDateString()
+              : "N/A",
+            endDate: b.ReturnDate
+              ? new Date(b.ReturnDate).toLocaleDateString()
+              : "N/A",
+            status: b.Status,
+            amount: b.TotalAmount || 0,
+          })),
         );
         setLoadingBookings(false);
       } catch {
-        toast.error('Failed to load dashboard data');
+        toast.error("Failed to load dashboard data");
         setStats((p) => ({ ...p, loading: false }));
         setLoadingBookings(false);
       }
@@ -140,70 +178,130 @@ const Dashboard = () => {
 
   const statCards = [
     {
-      title: 'Active Rentals',
+      title: "Active Rentals",
       value: stats.totalRentals,
-      gradient: 'bg-gradient-primary',
-      icon: <svg className="w-6 h-6 text-surface-950" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5}
-          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-      </svg>,
+      gradient: "bg-gradient-primary",
+      icon: (
+        <svg
+          className="w-6 h-6 text-surface-950"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2.5}
+            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+          />
+        </svg>
+      ),
     },
     {
-      title: 'Available Cars',
+      title: "Available Cars",
       value: stats.availableCars,
-      gradient: 'bg-gradient-success',
-      icon: <svg className="w-6 h-6 text-surface-950" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5}
-          d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0zM13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10l1 1h1m8-1h3l3-3-1-5h-5v8zm-8 0h8" />
-      </svg>,
+      gradient: "bg-gradient-success",
+      icon: (
+        <svg
+          className="w-6 h-6 text-surface-950"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2.5}
+            d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0zM13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10l1 1h1m8-1h3l3-3-1-5h-5v8zm-8 0h8"
+          />
+        </svg>
+      ),
     },
     {
-      title: 'Total Customers',
+      title: "Total Customers",
       value: stats.totalCustomers,
-      gradient: 'bg-gradient-info',
-      icon: <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
-          d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-      </svg>,
+      gradient: "bg-gradient-info",
+      icon: (
+        <svg
+          className="w-6 h-6 text-white"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={1.8}
+            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"
+          />
+        </svg>
+      ),
     },
     {
-      title: 'Total Revenue',
+      title: "Total Revenue",
       value: `$${stats.revenue.toLocaleString()}`,
-      gradient: 'bg-gradient-warning',
-      icon: <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
-          d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-      </svg>,
+      gradient: "bg-gradient-warning",
+      icon: (
+        <svg
+          className="w-6 h-6 text-white"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={1.8}
+            d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
+          />
+        </svg>
+      ),
     },
     {
-      title: 'Avg Rating',
+      title: "Avg Rating",
       value: `${stats.avgRating} ★`,
-      gradient: 'bg-gradient-primary',
-      icon: <svg className="w-6 h-6 text-surface-950" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
-          d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-      </svg>,
+      gradient: "bg-gradient-primary",
+      icon: (
+        <svg
+          className="w-6 h-6 text-surface-950"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={1.8}
+            d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
+          />
+        </svg>
+      ),
     },
   ];
 
   return (
     <div className="space-y-6 animate-slide-up">
-
       {/* Header */}
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
         <div>
-          <h1 className="page-title">Welcome Back, {admin?.fullName || 'Admin'} 👋</h1>
-          <p className="page-subtitle">Here is the luxury fleet overview for today.</p>
+          <h1 className="page-title">
+            Welcome Back, {admin?.fullName || "Admin"} 👋
+          </h1>
+          <p className="page-subtitle">
+            Here is the luxury fleet overview for today.
+          </p>
         </div>
-        <div className="hidden sm:flex items-center gap-2 text-xs text-surface-400 font-bold
-                        bg-surface-900 border border-surface-800 px-3.5 py-2.5 rounded-xl shadow-card">
+        <div
+          className="hidden sm:flex items-center gap-2 text-xs text-surface-400 font-bold
+                        bg-surface-900 border border-surface-800 px-3.5 py-2.5 rounded-xl shadow-card"
+        >
           <span className="w-2 h-2 rounded-full bg-success-500 animate-pulse-dot" />
           All luxury systems active
         </div>
       </div>
 
       {/* Stat cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 sm:gap-4">
         {statCards.map((s) => (
           <StatCard key={s.title} {...s} loading={stats.loading} />
         ))}
@@ -211,19 +309,22 @@ const Dashboard = () => {
 
       {/* Main grid */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
-
         {/* Bookings table */}
         <div className="xl:col-span-2 card overflow-hidden">
-          <div className="flex items-center justify-between px-5 py-4 border-b border-surface-800">
+          <div className="flex items-center justify-between px-4 sm:px-5 py-3 sm:py-4 border-b border-surface-800">
             <div>
-              <h2 className="text-base font-bold text-surface-900">Recent Reservations</h2>
-              <p className="text-xs text-surface-400 mt-0.5">Latest premium vehicle bookings</p>
+              <h2 className="text-sm sm:text-base font-bold text-surface-900">
+                Recent Reservations
+              </h2>
+              <p className="text-[11px] sm:text-xs text-surface-400 mt-0.5">
+                Latest premium vehicle bookings
+              </p>
             </div>
             <span className="pill-primary">Live</span>
           </div>
 
           {loadingBookings ? (
-            <div className="p-5 space-y-3">
+            <div className="p-4 sm:p-5 space-y-3">
               {[...Array(4)].map((_, i) => (
                 <div key={i} className="flex gap-3">
                   <div className="skeleton h-4 w-1/4" />
@@ -249,20 +350,33 @@ const Dashboard = () => {
                   {recentBookings.map((b) => (
                     <tr key={b.id}>
                       <td>
-                        <div className="flex items-center gap-2.5">
-                          <div className="w-7 h-7 rounded-full flex items-center justify-center text-surface-950 text-xs font-bold flex-shrink-0"
-                            style={{ background: 'linear-gradient(135deg, #D5B277, #846029)' }}>
+                        <div className="flex items-center gap-2">
+                          <div
+                            className="w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center text-surface-950 text-[11px] sm:text-xs font-bold flex-shrink-0"
+                            style={{
+                              background:
+                                "linear-gradient(135deg, #D5B277, #846029)",
+                            }}
+                          >
                             {b.customerName.charAt(0)}
                           </div>
-                          <span className="font-semibold text-surface-900 text-sm">{b.customerName}</span>
+                          <span className="font-semibold text-surface-900 text-xs sm:text-sm">
+                            {b.customerName}
+                          </span>
                         </div>
                       </td>
-                      <td className="text-surface-300 text-sm font-medium">{b.carModel}</td>
-                      <td className="text-xs text-surface-400 tabular font-medium">
+                      <td className="text-surface-300 text-xs sm:text-sm font-medium">
+                        {b.carModel}
+                      </td>
+                      <td className="text-[11px] sm:text-xs text-surface-400 tabular font-medium">
                         {b.startDate} — {b.endDate}
                       </td>
-                      <td><StatusBadge status={b.status} /></td>
-                      <td className="text-right font-bold text-surface-900">${b.amount}</td>
+                      <td>
+                        <StatusBadge status={b.status} />
+                      </td>
+                      <td className="text-right font-bold text-surface-900 text-xs sm:text-sm">
+                        ${b.amount}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -273,23 +387,41 @@ const Dashboard = () => {
 
         {/* Right column */}
         <div className="flex flex-col gap-4">
-
           {/* Quick Actions */}
-          <div className="card p-5">
-            <h3 className="text-sm font-bold text-surface-900 mb-4 flex items-center gap-2">
+          <div className="card p-4 sm:p-5">
+            <h3 className="text-sm font-bold text-surface-900 mb-3 sm:mb-4 flex items-center gap-2">
               <span className="w-1.5 h-4 rounded-full bg-gradient-primary inline-block" />
               Quick Actions
             </h3>
             <div className="space-y-2">
               {[
-                { label: 'Add New Vehicle',  gradient: 'btn-primary text-surface-950', icon: '🚗', path: '/dashboard/cars' },
-                { label: 'New Reservation',  gradient: 'bg-success-600 hover:bg-success-700 text-white', icon: '📅', path: '/dashboard/bookings' },
-                { label: 'Register Customer', gradient: 'bg-info-600 hover:bg-info-700 text-white',    icon: '👤', path: '/dashboard/customers' },
+                {
+                  label: "Add New Vehicle",
+                  gradient: "btn-primary text-surface-950",
+                  icon: "🚗",
+                  path: "/dashboard/cars",
+                },
+                {
+                  label: "New Reservation",
+                  gradient: "bg-success-600 hover:bg-success-700 text-white",
+                  icon: "📅",
+                  path: "/dashboard/bookings",
+                },
+                {
+                  label: "Register Customer",
+                  gradient: "bg-info-600 hover:bg-info-700 text-white",
+                  icon: "👤",
+                  path: "/dashboard/customers",
+                },
               ].map(({ label, gradient, icon, path }) => (
-                <button key={label}
-                  onClick={() => navigate(path, { state: { openAddModal: true } })}
-                  className={`w-full ${gradient} btn-md justify-start gap-3 text-sm font-semibold
-                              rounded-xl shadow-sm active:scale-[.97] transition-all`}>
+                <button
+                  key={label}
+                  onClick={() =>
+                    navigate(path, { state: { openAddModal: true } })
+                  }
+                  className={`w-full ${gradient} btn-md justify-start gap-3 text-xs sm:text-sm font-semibold
+                              rounded-xl shadow-sm active:scale-[.97] transition-all`}
+                >
                   <span>{icon}</span>
                   {label}
                 </button>
@@ -298,21 +430,40 @@ const Dashboard = () => {
           </div>
 
           {/* System Diagnostics */}
-          <div className="card p-5">
-            <h3 className="text-sm font-bold text-surface-900 mb-4 flex items-center gap-2">
+          <div className="card p-4 sm:p-5">
+            <h3 className="text-sm font-bold text-surface-900 mb-3 sm:mb-4 flex items-center gap-2">
               <span className="w-1.5 h-4 rounded-full bg-gradient-success inline-block" />
               System Diagnostics
             </h3>
             <div className="space-y-3">
               {[
-                { label: 'Database Service', status: 'Online',    color: 'bg-success-500', ok: true },
-                { label: 'API Server Host', status: 'Running',   color: 'bg-success-500', ok: true },
+                {
+                  label: "Database Service",
+                  status: "Online",
+                  color: "bg-success-500",
+                  ok: true,
+                },
+                {
+                  label: "API Server Host",
+                  status: "Running",
+                  color: "bg-success-500",
+                  ok: true,
+                },
               ].map(({ label, status, color, ok }) => (
-                <div key={label} className="flex items-center justify-between text-sm">
+                <div
+                  key={label}
+                  className="flex items-center justify-between text-xs sm:text-sm"
+                >
                   <span className="text-surface-400 font-medium">{label}</span>
-                  <span className={`flex items-center gap-1.5 font-bold text-xs
-                    ${ok ? 'text-success-500' : 'text-surface-400'}`}>
-                    {color && <span className={`w-2 h-2 rounded-full ${color} animate-pulse-dot`} />}
+                  <span
+                    className={`flex items-center gap-1.5 font-bold text-[11px] sm:text-xs
+                    ${ok ? "text-success-500" : "text-surface-400"}`}
+                  >
+                    {color && (
+                      <span
+                        className={`w-2 h-2 rounded-full ${color} animate-pulse-dot`}
+                      />
+                    )}
                     {status}
                   </span>
                 </div>
@@ -321,36 +472,56 @@ const Dashboard = () => {
           </div>
 
           {/* Alerts */}
-          <div className="card p-5">
-            <h3 className="text-sm font-bold text-surface-900 mb-4 flex items-center gap-2">
+          <div className="card p-4 sm:p-5">
+            <h3 className="text-sm font-bold text-surface-900 mb-3 sm:mb-4 flex items-center gap-2">
               <span className="w-1.5 h-4 rounded-full bg-gradient-warning inline-block" />
               System Alerts
             </h3>
             <div className="space-y-2.5">
               {stats.maintenanceCars > 0 && (
                 <div className="flex items-start gap-3 p-3 rounded-xl bg-warning-50/5 border border-warning-500/10">
-                  <span className="text-warning-500 mt-0.5 text-base flex-shrink-0">⚠️</span>
+                  <span className="text-warning-500 mt-0.5 text-sm sm:text-base flex-shrink-0">
+                    ⚠️
+                  </span>
                   <div>
-                    <p className="text-sm font-bold text-warning-500">Fleet Maintenance Due</p>
-                    <p className="text-xs text-surface-400 mt-0.5">{stats.maintenanceCars} vehicle{stats.maintenanceCars !== 1 ? 's' : ''} in maintenance</p>
+                    <p className="text-xs sm:text-sm font-bold text-warning-500">
+                      Fleet Maintenance Due
+                    </p>
+                    <p className="text-[11px] sm:text-xs text-surface-400 mt-0.5">
+                      {stats.maintenanceCars} vehicle
+                      {stats.maintenanceCars !== 1 ? "s" : ""} in maintenance
+                    </p>
                   </div>
                 </div>
               )}
               {stats.pendingBookings > 0 && (
                 <div className="flex items-start gap-3 p-3 rounded-xl bg-info-50/5 border border-info-500/10">
-                  <span className="text-info-400 mt-0.5 text-base flex-shrink-0">📋</span>
+                  <span className="text-info-400 mt-0.5 text-sm sm:text-base flex-shrink-0">
+                    📋
+                  </span>
                   <div>
-                    <p className="text-sm font-bold text-info-400">Pending Reservations</p>
-                    <p className="text-xs text-surface-400 mt-0.5">{stats.pendingBookings} reservation{stats.pendingBookings !== 1 ? 's' : ''} awaiting approval</p>
+                    <p className="text-xs sm:text-sm font-bold text-info-400">
+                      Pending Reservations
+                    </p>
+                    <p className="text-[11px] sm:text-xs text-surface-400 mt-0.5">
+                      {stats.pendingBookings} reservation
+                      {stats.pendingBookings !== 1 ? "s" : ""} awaiting approval
+                    </p>
                   </div>
                 </div>
               )}
               {stats.maintenanceCars === 0 && stats.pendingBookings === 0 && (
                 <div className="flex items-start gap-3 p-3 rounded-xl bg-success-50/5 border border-success-500/10">
-                  <span className="text-success-500 mt-0.5 text-base flex-shrink-0">✅</span>
+                  <span className="text-success-500 mt-0.5 text-sm sm:text-base flex-shrink-0">
+                    ✅
+                  </span>
                   <div>
-                    <p className="text-sm font-bold text-success-500">All Clear</p>
-                    <p className="text-xs text-surface-400 mt-0.5">No critical alerts right now</p>
+                    <p className="text-xs sm:text-sm font-bold text-success-500">
+                      All Clear
+                    </p>
+                    <p className="text-[11px] sm:text-xs text-surface-400 mt-0.5">
+                      No critical alerts right now
+                    </p>
                   </div>
                 </div>
               )}
