@@ -1,12 +1,26 @@
-# DriveEase — Car Rental Management System
+# 🚗 Car Rental Management System
 
-![DriveEase Banner](https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&q=80&w=2000&h=600)
+![Car Rental Banner](https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&q=80&w=2000&h=600)
 
-> A modern, full-stack web application designed to streamline car rental operations — from fleet management and customer registration to booking reservations and complete rental lifecycle tracking.
+> A production-deployed, full-stack **Car Rental Management System** built to digitize and automate all aspects of a car rental business — from fleet and booking management to driver assignment, payment processing, and customer reviews.
+
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-sheger.abdurehman.com-brightgreen?style=for-the-badge&logo=vercel)](https://sheger.abdurehman.com/)
+[![Backend API](https://img.shields.io/badge/Backend%20API-Render-blue?style=for-the-badge&logo=render)](https://carrentalmanagementsystem-1.onrender.com)
+[![GitHub](https://img.shields.io/badge/GitHub-Repository-black?style=for-the-badge&logo=github)](https://github.com/Abdurehman-Kero/CarRentalManagementSystem)
 
 ---
 
-## Table of Contents
+## 🌐 Live Deployment
+
+| Service | URL |
+|---------|-----|
+| **Frontend** | [https://sheger.abdurehman.com/](https://sheger.abdurehman.com/) |
+| **Backend API** | [https://carrentalmanagementsystem-1.onrender.com](https://carrentalmanagementsystem-1.onrender.com) |
+| **Health Check** | [https://carrentalmanagementsystem-1.onrender.com/health](https://carrentalmanagementsystem-1.onrender.com/health) |
+
+---
+
+## 📋 Table of Contents
 
 - [Overview](#overview)
 - [Team Members](#team-members)
@@ -24,23 +38,21 @@
 
 ---
 
-## Overview
+## 📖 Overview
 
-**DriveEase** is a fully functional Car Rental Management System built as an academic group project. It provides a role-based admin dashboard that allows rental company staff to manage their entire operation from a single, intuitive interface.
+**Car Rental Management System** is a comprehensive, production-ready web application designed to replace manual, paper-based workflows with a centralized real-time digital platform. The system provides a role-based admin dashboard that allows rental company staff to manage their entire operation from a single, intuitive interface.
 
 The system covers the complete rental workflow:
 
 ```
-Customer Registration → Booking Creation → Vehicle Checkout → Car Return
+Customer Registration → Booking Creation → Driver Assignment → Vehicle Checkout → Payment → Car Return → Review
 ```
 
-All data is persisted in a relational MySQL database through a RESTful Express.js API, with a React-powered frontend delivering a fast and responsive user experience.
+All data is persisted in a relational MySQL database through a RESTful Express.js API, with a React-powered frontend delivering a fast, modern, and responsive user experience.
 
 ---
 
-## Team Members
-
-This project was designed and developed by the following team:
+## 👥 Team Members
 
 | Name | Role |
 |------|------|
@@ -51,53 +63,79 @@ This project was designed and developed by the following team:
 
 ---
 
-## Features
+## ✨ Features
 
-### Dashboard Analytics
-- Real-time summary cards showing active rentals, available vehicles, total customers, and monthly revenue
-- Quick-action buttons for common admin tasks (add car, add customer, new booking)
-- Visual revenue sparkline and recent activity feed
+### 📊 Live Dashboard
+- Real-time statistics: total revenue, active bookings, fleet utilization rate, total customers
+- Dynamic charts showing revenue trends and upcoming returns
+- Quick-action buttons for common admin tasks
 
-### Fleet Management
-- Add, edit, and remove vehicles from the fleet
-- Filter vehicles by status: **Available**, **In Use**, **Maintenance**, or **Retired**
+### 🚗 Fleet Management
+- Full CRUD for vehicles with filtering by status (Available / In Use / Maintenance / Retired)
 - Live search by brand, model, or license plate
-- Color swatch preview and optional vehicle image support
-- Vehicle status automatically updates when a booking is activated or a car is returned
+- Vehicle image support and color swatch preview
+- Vehicle status auto-updates on booking activation or car return
 
-### Customer Management
-- Full CRUD operations for customer profiles
-- Stores full name, email, phone, driver license number, and address
-- Auto-generated gradient avatar based on customer ID
-- Search customers by name, email, phone, or city
+### 👤 Customer Management
+- Full CRUD for customer profiles (name, email, phone, driver's license, address)
+- Auto-generated gradient avatars based on customer ID
+- Smart search across all customer fields
 
-### Booking System
-- Create reservations linked to existing customers and available vehicles
-- Interactive cost calculator — automatically computes the total based on daily rate and selected date range
+### 📅 Booking System
+- Create reservations linked to customers and available vehicles
+- Interactive cost calculator (daily rate × duration + insurance add-ons)
 - Booking status lifecycle: **Pending → Active → Completed / Cancelled**
 - Prevents double-booking of vehicles already in use
+- Assign multiple drivers and insurance packages per booking
 
-### Rental Lifecycle
-- Convert a Pending Booking into an **Active Rental** (vehicle checkout)
-- Mark a rental as **Returned** (vehicle check-in) with a single click
-- Automatically updates vehicle status and booking status on checkout/return
-- Displays both active and historical (returned) rentals in one table
+### 🔑 Rental Lifecycle
+- Convert a Pending Booking into an Active Rental (vehicle checkout)
+- Mark a rental as Returned with actual return date tracking
+- Automatically updates vehicle and booking status on checkout/return
+- Full rental history with active and returned records
 
-### Admin Management
-- Manage admin accounts with secure authentication
-- Role-based access with JWT token authorization
-- Session persistence with localStorage
+### 💳 Payments
+- Record payments with multiple payment method support
+- Link payments to specific bookings with timestamps
+- Full payment history per booking
 
-### Security & UX
-- JWT-based authentication with protected routes
-- Inline form error messages instead of generic browser popups
-- Premium styled confirmation dialogs for all destructive actions (delete, return)
-- Toast notifications for all create, update, delete, and error events
-- Fully responsive layout — works on desktop, tablet, and mobile screens
+### 🛡️ Insurance & Fuel Policies
+- Configurable insurance packages attachable to bookings
+- Fuel policy management affecting vehicle cost calculation
+
+### 🏢 Branch Management
+- Multi-branch support with city and location tracking
+- Assign vehicles to specific branches
+
+### 📂 Category Management
+- Vehicle categorization with custom daily pricing per category
+
+### 👨‍✈️ Driver Management
+- Manage a roster of licensed drivers
+- Assign drivers to specific bookings
+
+### 👷 Employee Management
+- Track employee records across branches
+- Role-based employee profiles
+
+### 🔧 Maintenance Tracking
+- Log and track vehicle maintenance records
+- Associate maintenance entries with specific vehicles
+
+### ⭐ Customer Reviews
+- View and manage customer feedback per vehicle
+- Star-rating system linked to completed bookings
+
+### 🔐 Authentication & Security
+- JWT-based authentication with 24-hour token expiry
+- Role-based access: **Admin** and **Super Admin**
+- Super admin auto-seeded on server startup
+- Protected API routes with token verification middleware
+- Session persistence using localStorage
 
 ---
 
-## Tech Stack
+## 🛠️ Tech Stack
 
 ### Frontend
 
@@ -105,26 +143,36 @@ This project was designed and developed by the following team:
 |------------|---------|
 | [React 18](https://react.dev/) | UI component library |
 | [Vite](https://vitejs.dev/) | Build tool and dev server |
-| [Tailwind CSS v3](https://tailwindcss.com/) | Utility-first CSS framework |
 | [React Router DOM](https://reactrouter.com/) | Client-side routing |
 | [Axios](https://axios-http.com/) | HTTP client for API calls |
 | [React Hot Toast](https://react-hot-toast.com/) | Toast notification system |
+| Vanilla CSS | Custom styling and animations |
 
 ### Backend
 
 | Technology | Purpose |
 |------------|---------|
 | [Node.js](https://nodejs.org/) | JavaScript runtime environment |
-| [Express.js](https://expressjs.com/) | Web framework and REST API |
+| [Express.js 5](https://expressjs.com/) | Web framework and REST API |
 | [MySQL](https://www.mysql.com/) | Relational database |
-| [Prisma v7](https://www.prisma.io/) | Type-safe ORM with MariaDB driver |
+| [mysql2](https://github.com/sidorares/node-mysql2) | MySQL driver with connection pooling |
 | [JSON Web Tokens (JWT)](https://jwt.io/) | Authentication and authorization |
 | [bcryptjs](https://github.com/dcodeIO/bcrypt.js) | Password hashing |
 | [CORS](https://github.com/expressjs/cors) | Cross-origin resource sharing |
+| [dotenv](https://github.com/motdotla/dotenv) | Environment variable management |
+
+### Deployment
+
+| Service | Purpose |
+|---------|---------|
+| [Render](https://render.com/) | Backend Node.js API hosting |
+| [cPanel](https://cpanel.net/) | Remote MySQL database hosting |
+| Custom Domain | Frontend hosting at `sheger.abdurehman.com` |
+| [GitHub](https://github.com/) | Version control & CI/CD trigger |
 
 ---
 
-## Getting Started
+## 🚀 Getting Started
 
 Follow these step-by-step instructions to run the project on your local machine.
 
@@ -145,13 +193,13 @@ cd CarRentalManagementSystem
 
 ### 2. Database Setup
 
-Make sure your local MySQL server is running (default port `3306`). Then create an empty database for the project:
+Make sure your local MySQL server is running (default port `3306`). Then import the provided SQL dump or create the database manually:
 
 ```sql
-CREATE DATABASE crms;
+CREATE DATABASE carrentalmanagement;
 ```
 
-> **Note:** The Prisma schema push in the next step will automatically create all required tables inside this database.
+> **Note:** Import the SQL schema file from the repository to create all required tables.
 
 ### 3. Backend Setup
 
@@ -169,25 +217,20 @@ Create a `.env` file in the `backend/` directory with the following content:
 DB_HOST=localhost
 DB_PORT=3306
 DB_USER=root
-DB_PASSWORD=root
-DB_NAME=crms
-DATABASE_URL="mysql://root:root@localhost:3306/crms"
+DB_PASSWORD=your_password
+DB_NAME=carrentalmanagement
 
 # Server
 PORT=5000
 
 # Authentication
 JWT_SECRET=your_super_secret_key_here
+
+# Environment
+NODE_ENV=development
 ```
 
 > **Important:** Replace `DB_USER`, `DB_PASSWORD`, and `JWT_SECRET` with your own values. Never commit your `.env` file to version control.
-
-Generate the Prisma client and push the schema to your database:
-
-```bash
-npx prisma generate
-npx prisma db push
-```
 
 Start the backend development server:
 
@@ -195,7 +238,7 @@ Start the backend development server:
 npm run dev
 ```
 
-The API server will start at **`http://localhost:5000`**.
+The API server will start at **`http://localhost:5000`**. A super admin account will be automatically seeded on first startup.
 
 ### 4. Frontend Setup
 
@@ -214,40 +257,53 @@ npm run dev
 
 The frontend will be available at **`http://localhost:5173`** (or `5174` if port `5173` is already in use).
 
+### 5. Default Login
+
+Once the backend is running, use these credentials to log in:
+
+| Field | Value |
+|-------|-------|
+| **Email** | `keroabdurehman@gmail.com` |
+| **Password** | `nexus@0974` |
+
 ---
 
-## Project Structure
+## 🗂️ Project Structure
 
 ```
 CarRentalManagementSystem/
 │
 ├── backend/
-│   ├── prisma/
-│   │   └── schema.prisma          # Database schema (tables & relations)
 │   ├── src/
 │   │   ├── controllers/           # Business logic per resource
 │   │   │   ├── authController.js
 │   │   │   ├── carController.js
 │   │   │   ├── bookingController.js
 │   │   │   ├── customerController.js
-│   │   │   └── rentalController.js
+│   │   │   ├── rentalController.js
+│   │   │   ├── driverController.js
+│   │   │   ├── employeeController.js
+│   │   │   ├── branchController.js
+│   │   │   ├── categoryController.js
+│   │   │   ├── fuelPolicyController.js
+│   │   │   ├── insuranceController.js
+│   │   │   ├── maintenanceController.js
+│   │   │   ├── paymentController.js
+│   │   │   ├── paymentMethodController.js
+│   │   │   └── reviewController.js
 │   │   ├── routes/                # Express route definitions
-│   │   │   ├── authRoutes.js
-│   │   │   ├── carRoutes.js
-│   │   │   ├── bookingRoutes.js
-│   │   │   ├── customerRoutes.js
-│   │   │   └── rentalRoutes.js
-│   │   ├── middleware/            # Auth middleware (JWT verification)
-│   │   ├── lib/                   # Prisma client singleton
-│   │   └── utils/                 # Shared utility functions
+│   │   ├── middleware/            # JWT auth middleware
+│   │   └── lib/                  # MySQL connection pool
 │   ├── index.js                   # Express app entry point
-│   └── prisma.config.ts           # Prisma v7 adapter configuration
+│   └── package.json
 │
 └── frontend/
     ├── src/
     │   ├── components/            # Reusable UI components
-    │   │   ├── ConfirmModal.jsx   # Custom confirmation dialog
-    │   │   └── ProtectedRoute.jsx # Auth guard for private routes
+    │   │   ├── ConfirmModal.jsx
+    │   │   └── ProtectedRoute.jsx
+    │   ├── context/
+    │   │   └── AuthContext.jsx    # Global auth state
     │   ├── layouts/
     │   │   └── MainLayout.jsx     # Sidebar + Topbar shell layout
     │   ├── pages/                 # One file per application page
@@ -257,93 +313,112 @@ CarRentalManagementSystem/
     │   │   ├── Customers.jsx
     │   │   ├── Bookings.jsx
     │   │   ├── Rentals.jsx
+    │   │   ├── Drivers.jsx
+    │   │   ├── Employees.jsx
+    │   │   ├── Branches.jsx
+    │   │   ├── InsuranceManagement.jsx
+    │   │   ├── Maintenance.jsx
+    │   │   ├── Payments.jsx
+    │   │   ├── Reviews.jsx
+    │   │   ├── Settings.jsx
     │   │   └── AdminsManagement.jsx
-    │   ├── services/              # Axios API service modules
-    │   │   ├── api.js             # Axios instance & interceptors
-    │   │   ├── carService.js
-    │   │   ├── bookingService.js
-    │   │   ├── customerService.js
-    │   │   └── rentalService.js
+    │   ├── services/
+    │   │   └── api.js             # Axios instance & interceptors
     │   ├── App.jsx                # Root component & route definitions
-    │   └── index.css              # Global styles & Tailwind directives
-    ├── tailwind.config.js         # Custom color palette & animations
-    └── vite.config.js             # Vite build configuration
+    │   └── index.css              # Global styles
+    └── vite.config.js
 ```
 
 ---
 
-## API Reference
+## 📡 API Reference
 
-All API endpoints are prefixed with `http://localhost:5000/api`.
+Base URL (Production): `https://carrentalmanagementsystem-1.onrender.com/api`  
+Base URL (Local): `http://localhost:5000/api`
 
-### Authentication
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/auth/login` | Log in an admin and receive a JWT token |
-| `POST` | `/auth/register` | Register a new admin account |
-
-### Vehicles (Cars)
+### Authentication (Public)
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `GET` | `/cars` | Retrieve all vehicles |
-| `GET` | `/cars/:id` | Retrieve a single vehicle by ID |
-| `POST` | `/cars` | Add a new vehicle to the fleet |
-| `PUT` | `/cars/:id` | Update vehicle details |
-| `PATCH` | `/cars/:id/status` | Update vehicle status only |
-| `DELETE` | `/cars/:id` | Remove a vehicle from the fleet |
+| `POST` | `/auth/login` | Log in and receive a JWT token |
+| `GET` | `/auth/me` | Get the currently authenticated admin |
 
-### Customers
+### Fleet (Protected)
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `GET` | `/customers` | Retrieve all customers |
-| `GET` | `/customers/:id` | Retrieve a single customer by ID |
-| `POST` | `/customers` | Register a new customer |
-| `PUT` | `/customers/:id` | Update customer information |
-| `DELETE` | `/customers/:id` | Delete a customer record |
+| `GET` | `/cars` | Get all vehicles |
+| `GET` | `/cars/:id` | Get a single vehicle |
+| `POST` | `/cars` | Add a vehicle |
+| `PUT` | `/cars/:id` | Update a vehicle |
+| `PATCH` | `/cars/:id/status` | Update vehicle status |
+| `DELETE` | `/cars/:id` | Delete a vehicle |
 
-### Bookings
+### Customers (Protected)
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `GET` | `/bookings` | Retrieve all bookings |
-| `GET` | `/bookings/:id` | Retrieve a single booking |
-| `POST` | `/bookings` | Create a new booking |
-| `PUT` | `/bookings/:id` | Update booking details |
+| `GET` | `/customers` | Get all customers |
+| `GET` | `/customers/:id` | Get a customer |
+| `POST` | `/customers` | Add a customer |
+| `PUT` | `/customers/:id` | Update a customer |
+| `DELETE` | `/customers/:id` | Delete a customer |
+
+### Bookings (Protected)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/bookings` | Get all bookings |
+| `GET` | `/bookings/:id` | Get a booking |
+| `POST` | `/bookings` | Create a booking |
 | `PATCH` | `/bookings/:id/status` | Update booking status |
-| `DELETE` | `/bookings/:id` | Cancel and delete a booking |
+| `POST` | `/bookings/:id/drivers` | Assign a driver |
+| `DELETE` | `/bookings/:id/drivers/:driverId` | Remove a driver |
+| `POST` | `/bookings/:id/insurances` | Attach insurance |
 
-### Rentals
+### Rentals (Protected)
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `GET` | `/rentals` | Retrieve all rentals |
-| `GET` | `/rentals/:id` | Retrieve a single rental |
-| `POST` | `/rentals` | Create a new rental (vehicle checkout) |
-| `PATCH` | `/rentals/:id/return` | Record a vehicle return (check-in) |
+| `GET` | `/rentals` | Get all rentals |
+| `POST` | `/rentals` | Create a rental (checkout) |
+| `PATCH` | `/rentals/:id/return` | Return a vehicle |
+
+### Other Protected Endpoints
+
+| Resource | Base Path |
+|----------|-----------|
+| Branches | `/api/branches` |
+| Categories | `/api/categories` |
+| Drivers | `/api/drivers` |
+| Employees | `/api/employees` |
+| Insurance | `/api/insurances` |
+| Fuel Policies | `/api/fuel-policies` |
+| Maintenance | `/api/maintenance` |
+| Payments | `/api/payments` |
+| Payment Methods | `/api/payment-methods` |
+| Reviews | `/api/reviews` |
 
 ---
 
-## Environment Variables
+## ⚙️ Environment Variables
 
 The following environment variables are required in `backend/.env`:
 
 | Variable | Description | Example |
 |----------|-------------|---------|
-| `DATABASE_URL` | Full MySQL connection string for Prisma | `mysql://root:root@localhost:3306/crms` |
 | `DB_HOST` | Database host | `localhost` |
 | `DB_PORT` | Database port | `3306` |
 | `DB_USER` | Database username | `root` |
-| `DB_PASSWORD` | Database password | `root` |
-| `DB_NAME` | Database name | `crms` |
-| `PORT` | Port for the Express server | `5000` |
+| `DB_PASSWORD` | Database password | `your_password` |
+| `DB_NAME` | Database name | `carrentalmanagement` |
+| `PORT` | Express server port | `5000` |
 | `JWT_SECRET` | Secret key for signing JWT tokens | `your_secret_key` |
+| `NODE_ENV` | Environment mode | `development` or `production` |
 
 ---
 
-## License
+## 📄 License
 
 This project is open-source and available under the [MIT License](LICENSE).
 
