@@ -1,36 +1,60 @@
-import React, { useEffect, useState } from 'react';
-import reviewService from '../services/reviewService';
-import carService from '../services/carService';
-import customerService from '../services/customerService';
-import toast from 'react-hot-toast';
-import ConfirmModal from '../components/ConfirmModal';
+import React, { useEffect, useState } from "react";
+import reviewService from "../services/reviewService";
+import carService from "../services/carService";
+import customerService from "../services/customerService";
+import toast from "react-hot-toast";
+import ConfirmModal from "../components/ConfirmModal";
 
 /* ── Helpers ──────────────────────────────────────────────────────── */
 const Spinner = () => (
   <div className="flex flex-col items-center justify-center py-32 gap-4 animate-fade-in">
     <div className="relative flex items-center justify-center">
       <div className="absolute w-12 h-12 rounded-full border border-primary-500/10 animate-ping opacity-25" />
-      <svg className="w-10 h-10 animate-spin text-primary-500" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle className="opacity-10" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
-        <path className="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+      <svg
+        className="w-10 h-10 animate-spin text-primary-500"
+        viewBox="0 0 24 24"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <circle
+          className="opacity-10"
+          cx="12"
+          cy="12"
+          r="10"
+          stroke="currentColor"
+          strokeWidth="3"
+        />
+        <path
+          className="opacity-90"
+          fill="currentColor"
+          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+        />
       </svg>
     </div>
-    <span className="text-[11px] text-primary-400 font-bold uppercase tracking-[0.25em]">Loading reviews…</span>
+    <span className="text-[11px] text-primary-400 font-bold uppercase tracking-[0.25em]">
+      Loading reviews…
+    </span>
   </div>
 );
 
 const formatDate = (d) => {
-  if (!d) return 'N/A';
-  return new Intl.DateTimeFormat('en-US', {
-    month: 'short', day: 'numeric', year: 'numeric'
+  if (!d) return "N/A";
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
   }).format(new Date(d));
 };
 
 const StarRating = ({ rating }) => {
   return (
-    <div className="flex text-warning-400">
+    <div className="flex">
       {[1, 2, 3, 4, 5].map((star) => (
-        <svg key={star} className={`w-4 h-4 ${star <= rating ? 'fill-current' : 'text-surface-200 fill-current'}`} viewBox="0 0 20 20">
+        <svg
+          key={star}
+          className={`w-4 h-4 fill-current ${star <= rating ? "text-primary-400" : "text-surface-500"}`}
+          viewBox="0 0 20 20"
+        >
           <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
         </svg>
       ))}
@@ -40,14 +64,23 @@ const StarRating = ({ rating }) => {
 
 /* ── Reviews ────────────────────────────────────────────────────── */
 const Reviews = () => {
-  const [reviews, setReviews]       = useState([]);
-  const [cars, setCars]             = useState([]);
-  const [customers, setCustomers]   = useState([]);
-  const [loading, setLoading]       = useState(true);
-  const [search, setSearch]         = useState('');
+  const [reviews, setReviews] = useState([]);
+  const [cars, setCars] = useState([]);
+  const [customers, setCustomers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [form, setForm] = useState({
+    CustID: "",
+    CarID: "",
+    Rating: 5,
+    Comment: "",
+  });
+  const [saving, setSaving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(null);
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   const fetchData = async () => {
     setLoading(true);
@@ -55,13 +88,16 @@ const Reviews = () => {
       const [rRes, cRes, cuRes] = await Promise.all([
         reviewService.getAllReviews(),
         carService.getAllCars(),
-        customerService.getAllCustomers()
+        customerService.getAllCustomers(),
       ]);
       setReviews(Array.isArray(rRes) ? rRes : []);
       setCars(Array.isArray(cRes) ? cRes : []);
       setCustomers(Array.isArray(cuRes) ? cuRes : []);
-    } catch { toast.error('Failed to fetch data'); }
-    finally { setLoading(false); }
+    } catch {
+      toast.error("Failed to fetch data");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleDelete = (id) => setConfirmDelete(id);
@@ -71,18 +107,50 @@ const Reviews = () => {
     setConfirmDelete(null);
     try {
       await reviewService.deleteReview(id);
-      toast.success('Review deleted');
+      toast.success("Review deleted");
       fetchData();
-    } catch (e) { toast.error(e?.error || 'Failed to delete review'); }
+    } catch (e) {
+      toast.error(e?.error || "Failed to delete review");
+    }
+  };
+
+  const handleFormChange = (e) => {
+    const { name, value } = e.target;
+    setForm((p) => ({ ...p, [name]: value }));
+  };
+
+  const handleCreate = async (e) => {
+    e.preventDefault();
+    if (!form.CustID || !form.CarID || !form.Rating) {
+      toast.error("Please select customer, car, and rating");
+      return;
+    }
+    setSaving(true);
+    try {
+      await reviewService.createReview({
+        CustID: parseInt(form.CustID),
+        CarID: parseInt(form.CarID),
+        Rating: parseInt(form.Rating),
+        Comment: form.Comment?.trim() || null,
+        Date: new Date().toISOString(),
+      });
+      toast.success("Review created");
+      setForm({ CustID: "", CarID: "", Rating: 5, Comment: "" });
+      fetchData();
+    } catch (e2) {
+      toast.error(e2?.error || "Failed to create review");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const getCarString = (id) => {
-    const c = cars.find(car => car.CarID === id);
+    const c = cars.find((car) => car.CarID === id);
     return c ? `${c.Brand} ${c.Model}` : `Car #${id}`;
   };
 
   const getCustomerName = (id) => {
-    const c = customers.find(cust => cust.CustID === id);
+    const c = customers.find((cust) => cust.CustID === id);
     return c ? c.FullName : `Customer #${id}`;
   };
 
@@ -106,19 +174,105 @@ const Reviews = () => {
       <div className="page-header">
         <div>
           <h1 className="page-title">Customer Reviews</h1>
-          <p className="page-subtitle">{reviews.length} review{reviews.length !== 1 ? 's' : ''} submitted</p>
+          <p className="page-subtitle">
+            {reviews.length} review{reviews.length !== 1 ? "s" : ""} submitted
+          </p>
         </div>
       </div>
 
+      {/* Create Review */}
+      <form onSubmit={handleCreate} className="card p-6 space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-bold text-surface-900">Add Review</h2>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label className="form-label">Customer</label>
+            <select
+              name="CustID"
+              className="input-field"
+              value={form.CustID}
+              onChange={handleFormChange}
+            >
+              <option value="">Select customer</option>
+              {customers.map((c) => (
+                <option key={c.CustID} value={c.CustID}>
+                  {c.FullName}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="form-label">Car</label>
+            <select
+              name="CarID"
+              className="input-field"
+              value={form.CarID}
+              onChange={handleFormChange}
+            >
+              <option value="">Select car</option>
+              {cars.map((c) => (
+                <option key={c.CarID} value={c.CarID}>
+                  {c.Brand} {c.Model}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="form-label">Rating</label>
+            <select
+              name="Rating"
+              className="input-field"
+              value={form.Rating}
+              onChange={handleFormChange}
+            >
+              {[5, 4, 3, 2, 1].map((r) => (
+                <option key={r} value={r}>
+                  {r}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+        <div>
+          <label className="form-label">Comment</label>
+          <textarea
+            name="Comment"
+            className="input-field min-h-[120px]"
+            placeholder="Optional note from the customer"
+            value={form.Comment}
+            onChange={handleFormChange}
+          />
+        </div>
+        <div className="flex justify-end">
+          <button type="submit" className="btn-primary" disabled={saving}>
+            {saving ? "Saving…" : "Create Review"}
+          </button>
+        </div>
+      </form>
+
       {/* Search */}
       <div className="relative max-w-xs">
-        <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-surface-300 pointer-events-none"
-          fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        <svg
+          className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-surface-300 pointer-events-none"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+          />
         </svg>
-        <input type="text" placeholder="Search comments, car, customer…"
-          className="input-field pl-10" value={search}
-          onChange={(e) => setSearch(e.target.value)} />
+        <input
+          type="text"
+          placeholder="Search comments, car, customer…"
+          className="input-field pl-10"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
       </div>
 
       {/* Table */}
@@ -126,32 +280,50 @@ const Reviews = () => {
         {filtered.length === 0 ? (
           <div className="empty-state">
             <div className="w-16 h-16 rounded-2xl bg-primary-500/10 flex items-center justify-center mb-4">
-              <svg className="w-8 h-8 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+              <svg
+                className="w-8 h-8 text-primary-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.5}
+                  d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
+                />
               </svg>
             </div>
             <p className="text-surface-700 font-semibold text-base">
-              {search ? 'No reviews match' : 'No reviews yet'}
+              {search ? "No reviews match" : "No reviews yet"}
             </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 p-6">
             {filtered.map((r) => (
-              <div key={r.ReviewID} className="flex flex-col border border-surface-200 rounded-2xl p-5 bg-white relative group">
+              <div key={r.ReviewID} className="card p-5 relative group">
                 <div className="flex justify-between items-start mb-3">
                   <div>
-                    <h3 className="font-bold text-surface-900 text-sm">{getCustomerName(r.CustID)}</h3>
-                    <p className="text-xs text-surface-400">{getCarString(r.CarID)} • {formatDate(r.ReviewDate)}</p>
+                    <h3 className="font-bold text-surface-900 text-sm">
+                      {getCustomerName(r.CustID)}
+                    </h3>
+                    <p className="text-xs text-surface-400">
+                      {getCarString(r.CarID)} •{" "}
+                      {formatDate(r.ReviewDate || r.Date)}
+                    </p>
                   </div>
                   <div className="flex flex-col items-end gap-2">
                     <StarRating rating={r.Rating} />
-                    <button onClick={() => handleDelete(r.ReviewID)} className="opacity-0 group-hover:opacity-100 transition-opacity text-xs font-bold text-danger-500 hover:text-danger-600">
+                    <button
+                      onClick={() => handleDelete(r.ReviewID)}
+                      className="opacity-0 group-hover:opacity-100 transition-opacity text-xs font-bold text-danger-500 hover:text-danger-600"
+                    >
                       Delete
                     </button>
                   </div>
                 </div>
-                <div className="mt-2 text-sm text-surface-700 bg-surface-50 p-4 rounded-xl flex-grow">
-                  "{r.Comment}"
+                <div className="mt-2 text-sm text-surface-700 bg-surface-900/80 p-4 rounded-xl flex-grow">
+                  &ldquo;{r.Comment}&rdquo;
                 </div>
               </div>
             ))}
