@@ -6,8 +6,8 @@ const getAllInsurances = async (req, res) => {
   try {
     const [insurances] = await pool.query(
       `SELECT i.*, COUNT(bi.BookingID) AS UsageCount
-       FROM Insurance i
-       LEFT JOIN BookingInsurance bi ON i.InsuranceID = bi.InsuranceID
+       FROM insurance i
+       LEFT JOIN bookinginsurance bi ON i.InsuranceID = bi.InsuranceID
        GROUP BY i.InsuranceID
        ORDER BY i.InsuranceID ASC`
     );
@@ -20,7 +20,7 @@ const getAllInsurances = async (req, res) => {
 // ── Get insurance by ID ───────────────────────────────────────────
 const getInsuranceById = async (req, res) => {
   try {
-    const [rows] = await pool.query('SELECT * FROM Insurance WHERE InsuranceID = ?', [req.params.id]);
+    const [rows] = await pool.query('SELECT * FROM insurance WHERE InsuranceID = ?', [req.params.id]);
     if (!rows.length)
       return res.status(404).json({ success: false, error: 'Insurance not found' });
     res.json({ success: true, data: rows[0] });
@@ -37,11 +37,11 @@ const createInsurance = async (req, res) => {
       return res.status(400).json({ success: false, error: 'InsuranceID, InsuranceType and Cost are required' });
 
     await pool.query(
-      `INSERT INTO Insurance (InsuranceID, InsuranceType, Cost) VALUES (?, ?, ?)`,
+      `INSERT INTO insurance (InsuranceID, InsuranceType, Cost) VALUES (?, ?, ?)`,
       [parseInt(InsuranceID), InsuranceType.trim(), parseFloat(Cost)]
     );
 
-    const [ins] = await pool.query('SELECT * FROM Insurance WHERE InsuranceID = ?', [parseInt(InsuranceID)]);
+    const [ins] = await pool.query('SELECT * FROM insurance WHERE InsuranceID = ?', [parseInt(InsuranceID)]);
     res.status(201).json({ success: true, data: ins[0] });
   } catch (err) {
     if (err.code === 'ER_DUP_ENTRY')
@@ -64,8 +64,8 @@ const updateInsurance = async (req, res) => {
       return res.status(400).json({ success: false, error: 'No fields to update' });
 
     params.push(id);
-    await pool.query(`UPDATE Insurance SET ${sets.join(', ')} WHERE InsuranceID = ?`, params);
-    const [ins] = await pool.query('SELECT * FROM Insurance WHERE InsuranceID = ?', [id]);
+    await pool.query(`UPDATE insurance SET ${sets.join(', ')} WHERE InsuranceID = ?`, params);
+    const [ins] = await pool.query('SELECT * FROM insurance WHERE InsuranceID = ?', [id]);
     res.json({ success: true, data: ins[0] });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -75,7 +75,7 @@ const updateInsurance = async (req, res) => {
 // ── Delete insurance ──────────────────────────────────────────────
 const deleteInsurance = async (req, res) => {
   try {
-    const [result] = await pool.query('DELETE FROM Insurance WHERE InsuranceID = ?', [req.params.id]);
+    const [result] = await pool.query('DELETE FROM insurance WHERE InsuranceID = ?', [req.params.id]);
     if (result.affectedRows === 0)
       return res.status(404).json({ success: false, error: 'Insurance not found' });
     res.json({ success: true, message: 'Insurance deleted successfully' });

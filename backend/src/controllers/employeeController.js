@@ -10,8 +10,8 @@ const getAllEmployees = async (req, res) => {
 
     const [employees] = await pool.query(
       `SELECT e.*, b.BranchName, b.LocationCity
-       FROM Employee e
-       LEFT JOIN Branch b ON e.BranchID = b.BranchID
+       FROM employee e
+       LEFT JOIN branch b ON e.BranchID = b.BranchID
        ${where}
        ORDER BY e.EmployeeID ASC`,
       params
@@ -27,8 +27,8 @@ const getEmployeeById = async (req, res) => {
   try {
     const [rows] = await pool.query(
       `SELECT e.*, b.BranchName, b.LocationCity
-       FROM Employee e
-       LEFT JOIN Branch b ON e.BranchID = b.BranchID
+       FROM employee e
+       LEFT JOIN branch b ON e.BranchID = b.BranchID
        WHERE e.EmployeeID = ?`,
       [req.params.id]
     );
@@ -48,17 +48,17 @@ const createEmployee = async (req, res) => {
       return res.status(400).json({ success: false, error: 'All fields are required' });
 
     // Verify branch exists
-    const [branch] = await pool.query('SELECT BranchID FROM Branch WHERE BranchID = ?', [parseInt(BranchID)]);
+    const [branch] = await pool.query('SELECT BranchID FROM branch WHERE BranchID = ?', [parseInt(BranchID)]);
     if (!branch.length)
       return res.status(404).json({ success: false, error: 'Branch not found' });
 
     await pool.query(
-      `INSERT INTO Employee (EmployeeID, FullName, Role, Phone, BranchID) VALUES (?, ?, ?, ?, ?)`,
+      `INSERT INTO employee (EmployeeID, FullName, Role, Phone, BranchID) VALUES (?, ?, ?, ?, ?)`,
       [parseInt(EmployeeID), FullName.trim(), Role.trim(), Phone.trim(), parseInt(BranchID)]
     );
 
     const [emp] = await pool.query(
-      `SELECT e.*, b.BranchName FROM Employee e LEFT JOIN Branch b ON e.BranchID = b.BranchID WHERE e.EmployeeID = ?`,
+      `SELECT e.*, b.BranchName FROM employee e LEFT JOIN branch b ON e.BranchID = b.BranchID WHERE e.EmployeeID = ?`,
       [parseInt(EmployeeID)]
     );
     res.status(201).json({ success: true, data: emp[0] });
@@ -85,9 +85,9 @@ const updateEmployee = async (req, res) => {
       return res.status(400).json({ success: false, error: 'No fields to update' });
 
     params.push(id);
-    await pool.query(`UPDATE Employee SET ${sets.join(', ')} WHERE EmployeeID = ?`, params);
+    await pool.query(`UPDATE employee SET ${sets.join(', ')} WHERE EmployeeID = ?`, params);
     const [emp] = await pool.query(
-      `SELECT e.*, b.BranchName FROM Employee e LEFT JOIN Branch b ON e.BranchID = b.BranchID WHERE e.EmployeeID = ?`,
+      `SELECT e.*, b.BranchName FROM employee e LEFT JOIN branch b ON e.BranchID = b.BranchID WHERE e.EmployeeID = ?`,
       [id]
     );
     res.json({ success: true, data: emp[0] });
@@ -99,7 +99,7 @@ const updateEmployee = async (req, res) => {
 // ── Delete employee ───────────────────────────────────────────────
 const deleteEmployee = async (req, res) => {
   try {
-    const [result] = await pool.query('DELETE FROM Employee WHERE EmployeeID = ?', [req.params.id]);
+    const [result] = await pool.query('DELETE FROM employee WHERE EmployeeID = ?', [req.params.id]);
     if (result.affectedRows === 0)
       return res.status(404).json({ success: false, error: 'Employee not found' });
     res.json({ success: true, message: 'Employee deleted successfully' });

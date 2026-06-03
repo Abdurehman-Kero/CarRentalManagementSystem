@@ -27,10 +27,10 @@ const getAllCars = async (req, res) => {
              b.BranchName, b.LocationCity,
              fp.Description AS PolicyDescription, fp.AdditionalCharge,
              (SELECT ImageURL FROM carimage ci WHERE ci.CarID = c.CarID LIMIT 1) AS ImageURL
-      FROM Car c
-      LEFT JOIN Category  cat ON c.CategoryID = cat.CategoryID
-      LEFT JOIN Branch    b   ON c.BranchID   = b.BranchID
-      LEFT JOIN FuelPolicy fp ON c.PolicyID   = fp.PolicyID
+      FROM car c
+      LEFT JOIN category  cat ON c.CategoryID = cat.CategoryID
+      LEFT JOIN branch    b   ON c.BranchID   = b.BranchID
+      LEFT JOIN fuelpolicy fp ON c.PolicyID   = fp.PolicyID
       ${where.length ? 'WHERE ' + where.join(' AND ') : ''}
       ORDER BY c.CarID ASC
     `;
@@ -51,10 +51,10 @@ const getCarById = async (req, res) => {
              b.BranchName, b.LocationCity,
              fp.Description AS PolicyDescription, fp.AdditionalCharge,
              (SELECT ImageURL FROM carimage ci WHERE ci.CarID = c.CarID LIMIT 1) AS ImageURL
-      FROM Car c
-      LEFT JOIN Category  cat ON c.CategoryID = cat.CategoryID
-      LEFT JOIN Branch    b   ON c.BranchID   = b.BranchID
-      LEFT JOIN FuelPolicy fp ON c.PolicyID   = fp.PolicyID
+      FROM car c
+      LEFT JOIN category  cat ON c.CategoryID = cat.CategoryID
+      LEFT JOIN branch    b   ON c.BranchID   = b.BranchID
+      LEFT JOIN fuelpolicy fp ON c.PolicyID   = fp.PolicyID
       WHERE c.CarID = ?
     `, [req.params.id]);
 
@@ -73,7 +73,7 @@ const createCar = async (req, res) => {
             DailyRate, Mileage, CategoryID, BranchID, PolicyID, ImageURL } = req.body;
 
     await pool.query(
-      `INSERT INTO Car (CarID, LicensePlate, Model, Brand, Year, Color, Status,
+      `INSERT INTO car (CarID, LicensePlate, Model, Brand, Year, Color, Status,
                         DailyRate, Mileage, CategoryID, BranchID, PolicyID)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
@@ -95,7 +95,7 @@ const createCar = async (req, res) => {
       await pool.query('INSERT INTO carimage (CarID, ImageID, ImageURL) VALUES (?, 1, ?)', [parseInt(CarID), ImageURL]);
     }
 
-    const [car] = await pool.query('SELECT * FROM Car WHERE CarID = ?', [parseInt(CarID)]);
+    const [car] = await pool.query('SELECT * FROM car WHERE CarID = ?', [parseInt(CarID)]);
     res.status(201).json({ success: true, data: car[0] });
   } catch (err) {
     if (err.code === 'ER_DUP_ENTRY')
@@ -131,7 +131,7 @@ const updateCar = async (req, res) => {
 
     if (sets.length) {
       params.push(id);
-      await pool.query(`UPDATE Car SET ${sets.join(', ')} WHERE CarID = ?`, params);
+      await pool.query(`UPDATE car SET ${sets.join(', ')} WHERE CarID = ?`, params);
     }
 
     if (ImageURL !== undefined) {
@@ -147,7 +147,7 @@ const updateCar = async (req, res) => {
       }
     }
 
-    const [car] = await pool.query('SELECT * FROM Car WHERE CarID = ?', [id]);
+    const [car] = await pool.query('SELECT * FROM car WHERE CarID = ?', [id]);
     res.json({ success: true, data: car[0] });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -157,8 +157,8 @@ const updateCar = async (req, res) => {
 // ── Update car status ────────────────────────────────────────────
 const updateCarStatus = async (req, res) => {
   try {
-    await pool.query('UPDATE Car SET Status = ? WHERE CarID = ?', [req.body.status, req.params.id]);
-    const [car] = await pool.query('SELECT * FROM Car WHERE CarID = ?', [req.params.id]);
+    await pool.query('UPDATE car SET Status = ? WHERE CarID = ?', [req.body.status, req.params.id]);
+    const [car] = await pool.query('SELECT * FROM car WHERE CarID = ?', [req.params.id]);
     res.json({ success: true, data: car[0] });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -193,7 +193,7 @@ const deleteCar = async (req, res) => {
     await pool.query('DELETE FROM review WHERE CarID = ?', [id]);
 
     // 7. Finally delete the car itself
-    await pool.query('DELETE FROM Car WHERE CarID = ?', [id]);
+    await pool.query('DELETE FROM car WHERE CarID = ?', [id]);
 
     res.json({ success: true, message: 'Car and all its bookings/records successfully removed' });
   } catch (err) {

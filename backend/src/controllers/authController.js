@@ -14,7 +14,7 @@ const login = async (req, res) => {
       return res.status(400).json({ success: false, error: 'Email and password are required' });
 
     const [rows] = await pool.query(
-      'SELECT * FROM `Admin` WHERE Email = ?',
+      'SELECT * FROM `admin` WHERE Email = ?',
       [email.toLowerCase().trim()]
     );
     if (!rows.length)
@@ -53,7 +53,7 @@ const login = async (req, res) => {
 const getMe = async (req, res) => {
   try {
     const [rows] = await pool.query(
-      'SELECT AdminID, FullName, Email, Role, CreatedAt FROM `Admin` WHERE AdminID = ?',
+      'SELECT AdminID, FullName, Email, Role, CreatedAt FROM `admin` WHERE AdminID = ?',
       [req.admin.adminId]
     );
     if (!rows.length)
@@ -71,7 +71,7 @@ const getAllAdmins = async (req, res) => {
       return res.status(403).json({ success: false, error: 'Only the super admin can view all admins' });
 
     const [rows] = await pool.query(
-      'SELECT AdminID, FullName, Email, Role, CreatedAt FROM `Admin` ORDER BY CreatedAt ASC'
+      'SELECT AdminID, FullName, Email, Role, CreatedAt FROM `admin` ORDER BY CreatedAt ASC'
     );
     res.json({ success: true, data: rows });
   } catch (err) {
@@ -90,18 +90,18 @@ const addAdmin = async (req, res) => {
       return res.status(400).json({ success: false, error: 'Full name, email, and password are required' });
 
     const cleanEmail = email.toLowerCase().trim();
-    const [existing] = await pool.query('SELECT AdminID FROM `Admin` WHERE Email = ?', [cleanEmail]);
+    const [existing] = await pool.query('SELECT AdminID FROM `admin` WHERE Email = ?', [cleanEmail]);
     if (existing.length)
       return res.status(409).json({ success: false, error: 'An admin with this email already exists' });
 
     const hashed = await bcrypt.hash(password, 12);
     const [result] = await pool.query(
-      'INSERT INTO `Admin` (FullName, Email, Password, Role) VALUES (?, ?, ?, ?)',
+      'INSERT INTO `admin` (FullName, Email, Password, Role) VALUES (?, ?, ?, ?)',
       [fullName.trim(), cleanEmail, hashed, 'admin']
     );
 
     const [newAdmin] = await pool.query(
-      'SELECT AdminID, FullName, Email, Role, CreatedAt FROM `Admin` WHERE AdminID = ?',
+      'SELECT AdminID, FullName, Email, Role, CreatedAt FROM `admin` WHERE AdminID = ?',
       [result.insertId]
     );
     res.status(201).json({ success: true, data: newAdmin[0] });
@@ -116,13 +116,13 @@ const deleteAdmin = async (req, res) => {
     if (req.admin.email !== SUPER_ADMIN_EMAIL)
       return res.status(403).json({ success: false, error: 'Only the super admin can remove admins' });
 
-    const [rows] = await pool.query('SELECT * FROM `Admin` WHERE AdminID = ?', [req.params.id]);
+    const [rows] = await pool.query('SELECT * FROM `admin` WHERE AdminID = ?', [req.params.id]);
     if (!rows.length)
       return res.status(404).json({ success: false, error: 'Admin not found' });
     if (rows[0].Email === SUPER_ADMIN_EMAIL)
       return res.status(400).json({ success: false, error: 'Cannot delete the super admin account' });
 
-    await pool.query('DELETE FROM `Admin` WHERE AdminID = ?', [req.params.id]);
+    await pool.query('DELETE FROM `admin` WHERE AdminID = ?', [req.params.id]);
     res.json({ success: true, message: 'Admin removed successfully' });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -132,11 +132,11 @@ const deleteAdmin = async (req, res) => {
 // ── Seed super admin (called on startup) ─────────────────────────
 const seedSuperAdmin = async () => {
   try {
-    const [rows] = await pool.query('SELECT AdminID FROM `Admin` WHERE Email = ?', [SUPER_ADMIN_EMAIL]);
+    const [rows] = await pool.query('SELECT AdminID FROM `admin` WHERE Email = ?', [SUPER_ADMIN_EMAIL]);
     if (!rows.length) {
       const hashed = await bcrypt.hash('nexus@0974', 12);
       await pool.query(
-        'INSERT INTO `Admin` (FullName, Email, Password, Role) VALUES (?, ?, ?, ?)',
+        'INSERT INTO `admin` (FullName, Email, Password, Role) VALUES (?, ?, ?, ?)',
         ['Super Admin', SUPER_ADMIN_EMAIL, hashed, 'superadmin']
       );
       console.log(`✅ Super admin seeded: ${SUPER_ADMIN_EMAIL}`);

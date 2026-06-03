@@ -14,11 +14,11 @@ const getAllPayments = async (req, res) => {
               b.PickupDate, b.ReturnDate,
               c.FullName AS CustomerName,
               ca.Brand, ca.Model
-       FROM Payment p
-       LEFT JOIN PaymentMethod pm ON p.MethodID    = pm.MethodID
-       LEFT JOIN Booking        b  ON p.BookingID   = b.BookingID
-       LEFT JOIN Customer       c  ON b.CustID      = c.CustID
-       LEFT JOIN Car            ca ON b.CarID       = ca.CarID
+       FROM payment p
+       LEFT JOIN paymentmethod pm ON p.MethodID    = pm.MethodID
+       LEFT JOIN booking        b  ON p.BookingID   = b.BookingID
+       LEFT JOIN customer       c  ON b.CustID      = c.CustID
+       LEFT JOIN car            ca ON b.CarID       = ca.CarID
        ${where}
        ORDER BY p.PaymentDate DESC`,
       params
@@ -34,8 +34,8 @@ const getPaymentsByBooking = async (req, res) => {
   try {
     const [payments] = await pool.query(
       `SELECT p.*, pm.MethodType
-       FROM Payment p
-       LEFT JOIN PaymentMethod pm ON p.MethodID = pm.MethodID
+       FROM payment p
+       LEFT JOIN paymentmethod pm ON p.MethodID = pm.MethodID
        WHERE p.BookingID = ?
        ORDER BY p.PaymentDate DESC`,
       [req.params.id]
@@ -54,17 +54,17 @@ const createPayment = async (req, res) => {
       return res.status(400).json({ success: false, error: 'BookingID, PaymentID, Amount, PaymentDate and MethodID are required' });
 
     // Verify booking exists
-    const [booking] = await pool.query('SELECT BookingID FROM Booking WHERE BookingID = ?', [parseInt(BookingID)]);
+    const [booking] = await pool.query('SELECT BookingID FROM booking WHERE BookingID = ?', [parseInt(BookingID)]);
     if (!booking.length)
       return res.status(404).json({ success: false, error: 'Booking not found' });
 
     // Verify payment method exists
-    const [method] = await pool.query('SELECT MethodID FROM PaymentMethod WHERE MethodID = ?', [parseInt(MethodID)]);
+    const [method] = await pool.query('SELECT MethodID FROM paymentmethod WHERE MethodID = ?', [parseInt(MethodID)]);
     if (!method.length)
       return res.status(404).json({ success: false, error: 'Payment method not found' });
 
     await pool.query(
-      `INSERT INTO Payment (BookingID, PaymentID, Amount, PaymentDate, Status, MethodID)
+      `INSERT INTO payment (BookingID, PaymentID, Amount, PaymentDate, Status, MethodID)
        VALUES (?, ?, ?, ?, ?, ?)`,
       [
         parseInt(BookingID),
@@ -77,8 +77,8 @@ const createPayment = async (req, res) => {
     );
 
     const [payment] = await pool.query(
-      `SELECT p.*, pm.MethodType FROM Payment p
-       LEFT JOIN PaymentMethod pm ON p.MethodID = pm.MethodID
+      `SELECT p.*, pm.MethodType FROM payment p
+       LEFT JOIN paymentmethod pm ON p.MethodID = pm.MethodID
        WHERE p.BookingID = ? AND p.PaymentID = ?`,
       [parseInt(BookingID), parseInt(PaymentID)]
     );
@@ -95,7 +95,7 @@ const deletePayment = async (req, res) => {
   try {
     const { bookingId, paymentId } = req.params;
     const [result] = await pool.query(
-      'DELETE FROM Payment WHERE BookingID = ? AND PaymentID = ?',
+      'DELETE FROM payment WHERE BookingID = ? AND PaymentID = ?',
       [bookingId, paymentId]
     );
     if (result.affectedRows === 0)
@@ -115,12 +115,12 @@ const getRevenueStats = async (req, res) => {
          COUNT(*)                                AS TotalPayments,
          SUM(CASE WHEN Status='Completed' THEN Amount ELSE 0 END) AS CompletedRevenue,
          SUM(CASE WHEN Status='Pending'   THEN Amount ELSE 0 END) AS PendingRevenue
-       FROM Payment`
+       FROM payment`
     );
 
     const [monthly] = await pool.query(
       `SELECT DATE_FORMAT(PaymentDate, '%Y-%m') AS Month, SUM(Amount) AS Revenue, COUNT(*) AS Count
-       FROM Payment
+       FROM payment
        WHERE PaymentDate >= DATE_SUB(NOW(), INTERVAL 12 MONTH)
        GROUP BY DATE_FORMAT(PaymentDate, '%Y-%m')
        ORDER BY Month ASC`

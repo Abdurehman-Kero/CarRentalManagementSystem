@@ -6,8 +6,8 @@ const getAllPaymentMethods = async (req, res) => {
   try {
     const [methods] = await pool.query(
       `SELECT pm.*, COUNT(p.PaymentID) AS PaymentCount
-       FROM PaymentMethod pm
-       LEFT JOIN Payment p ON pm.MethodID = p.MethodID
+       FROM paymentmethod pm
+       LEFT JOIN payment p ON pm.MethodID = p.MethodID
        GROUP BY pm.MethodID
        ORDER BY pm.MethodID ASC`
     );
@@ -20,7 +20,7 @@ const getAllPaymentMethods = async (req, res) => {
 // ── Get payment method by ID ──────────────────────────────────────
 const getPaymentMethodById = async (req, res) => {
   try {
-    const [rows] = await pool.query('SELECT * FROM PaymentMethod WHERE MethodID = ?', [req.params.id]);
+    const [rows] = await pool.query('SELECT * FROM paymentmethod WHERE MethodID = ?', [req.params.id]);
     if (!rows.length)
       return res.status(404).json({ success: false, error: 'Payment method not found' });
     res.json({ success: true, data: rows[0] });
@@ -37,11 +37,11 @@ const createPaymentMethod = async (req, res) => {
       return res.status(400).json({ success: false, error: 'MethodID and MethodType are required' });
 
     await pool.query(
-      `INSERT INTO PaymentMethod (MethodID, MethodType) VALUES (?, ?)`,
+      `INSERT INTO paymentmethod (MethodID, MethodType) VALUES (?, ?)`,
       [parseInt(MethodID), MethodType.trim()]
     );
 
-    const [method] = await pool.query('SELECT * FROM PaymentMethod WHERE MethodID = ?', [parseInt(MethodID)]);
+    const [method] = await pool.query('SELECT * FROM paymentmethod WHERE MethodID = ?', [parseInt(MethodID)]);
     res.status(201).json({ success: true, data: method[0] });
   } catch (err) {
     if (err.code === 'ER_DUP_ENTRY')
@@ -57,8 +57,8 @@ const updatePaymentMethod = async (req, res) => {
     if (!MethodType)
       return res.status(400).json({ success: false, error: 'MethodType is required' });
 
-    await pool.query('UPDATE PaymentMethod SET MethodType = ? WHERE MethodID = ?', [MethodType.trim(), req.params.id]);
-    const [method] = await pool.query('SELECT * FROM PaymentMethod WHERE MethodID = ?', [req.params.id]);
+    await pool.query('UPDATE paymentmethod SET MethodType = ? WHERE MethodID = ?', [MethodType.trim(), req.params.id]);
+    const [method] = await pool.query('SELECT * FROM paymentmethod WHERE MethodID = ?', [req.params.id]);
     res.json({ success: true, data: method[0] });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -68,7 +68,7 @@ const updatePaymentMethod = async (req, res) => {
 // ── Delete payment method ─────────────────────────────────────────
 const deletePaymentMethod = async (req, res) => {
   try {
-    const [result] = await pool.query('DELETE FROM PaymentMethod WHERE MethodID = ?', [req.params.id]);
+    const [result] = await pool.query('DELETE FROM paymentmethod WHERE MethodID = ?', [req.params.id]);
     if (result.affectedRows === 0)
       return res.status(404).json({ success: false, error: 'Payment method not found' });
     res.json({ success: true, message: 'Payment method deleted successfully' });

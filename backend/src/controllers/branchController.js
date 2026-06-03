@@ -6,9 +6,9 @@ const getAllBranches = async (req, res) => {
   try {
     const [branches] = await pool.query(
       `SELECT b.*, COUNT(e.EmployeeID) AS EmployeeCount, COUNT(c.CarID) AS CarCount
-       FROM Branch b
-       LEFT JOIN Employee e ON b.BranchID = e.BranchID
-       LEFT JOIN Car      c ON b.BranchID = c.BranchID
+       FROM branch b
+       LEFT JOIN employee e ON b.BranchID = e.BranchID
+       LEFT JOIN car      c ON b.BranchID = c.BranchID
        GROUP BY b.BranchID
        ORDER BY b.BranchID ASC`
     );
@@ -21,7 +21,7 @@ const getAllBranches = async (req, res) => {
 // ── Get branch by ID ──────────────────────────────────────────────
 const getBranchById = async (req, res) => {
   try {
-    const [rows] = await pool.query('SELECT * FROM Branch WHERE BranchID = ?', [req.params.id]);
+    const [rows] = await pool.query('SELECT * FROM branch WHERE BranchID = ?', [req.params.id]);
     if (!rows.length)
       return res.status(404).json({ success: false, error: 'Branch not found' });
     res.json({ success: true, data: rows[0] });
@@ -38,12 +38,12 @@ const createBranch = async (req, res) => {
       return res.status(400).json({ success: false, error: 'All fields are required' });
 
     await pool.query(
-      `INSERT INTO Branch (BranchID, BranchName, LocationCity, LocationState, Phone)
+      `INSERT INTO branch (BranchID, BranchName, LocationCity, LocationState, Phone)
        VALUES (?, ?, ?, ?, ?)`,
       [parseInt(BranchID), BranchName.trim(), LocationCity.trim(), LocationState.trim(), Phone.trim()]
     );
 
-    const [branch] = await pool.query('SELECT * FROM Branch WHERE BranchID = ?', [parseInt(BranchID)]);
+    const [branch] = await pool.query('SELECT * FROM branch WHERE BranchID = ?', [parseInt(BranchID)]);
     res.status(201).json({ success: true, data: branch[0] });
   } catch (err) {
     if (err.code === 'ER_DUP_ENTRY')
@@ -68,8 +68,8 @@ const updateBranch = async (req, res) => {
       return res.status(400).json({ success: false, error: 'No fields to update' });
 
     params.push(id);
-    await pool.query(`UPDATE Branch SET ${sets.join(', ')} WHERE BranchID = ?`, params);
-    const [branch] = await pool.query('SELECT * FROM Branch WHERE BranchID = ?', [id]);
+    await pool.query(`UPDATE branch SET ${sets.join(', ')} WHERE BranchID = ?`, params);
+    const [branch] = await pool.query('SELECT * FROM branch WHERE BranchID = ?', [id]);
     res.json({ success: true, data: branch[0] });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -79,7 +79,7 @@ const updateBranch = async (req, res) => {
 // ── Delete branch ─────────────────────────────────────────────────
 const deleteBranch = async (req, res) => {
   try {
-    const [result] = await pool.query('DELETE FROM Branch WHERE BranchID = ?', [req.params.id]);
+    const [result] = await pool.query('DELETE FROM branch WHERE BranchID = ?', [req.params.id]);
     if (result.affectedRows === 0)
       return res.status(404).json({ success: false, error: 'Branch not found' });
     res.json({ success: true, message: 'Branch deleted successfully' });

@@ -10,8 +10,8 @@ const getAllMaintenance = async (req, res) => {
 
     const [records] = await pool.query(
       `SELECT m.*, c.Brand, c.Model, c.LicensePlate
-       FROM Maintenance m
-       LEFT JOIN Car c ON m.CarID = c.CarID
+       FROM maintenance m
+       LEFT JOIN car c ON m.CarID = c.CarID
        ${where}
        ORDER BY m.CarID ASC, m.MaintenanceID ASC`,
       params
@@ -27,8 +27,8 @@ const getMaintenanceByCar = async (req, res) => {
   try {
     const [records] = await pool.query(
       `SELECT m.*, c.Brand, c.Model
-       FROM Maintenance m
-       LEFT JOIN Car c ON m.CarID = c.CarID
+       FROM maintenance m
+       LEFT JOIN car c ON m.CarID = c.CarID
        WHERE m.CarID = ?
        ORDER BY m.MaintenanceID DESC`,
       [req.params.carId]
@@ -47,12 +47,12 @@ const createMaintenance = async (req, res) => {
       return res.status(400).json({ success: false, error: 'CarID, MaintenanceID, ServiceShop, Description and Cost are required' });
 
     // Verify car exists
-    const [car] = await pool.query('SELECT CarID FROM Car WHERE CarID = ?', [parseInt(CarID)]);
+    const [car] = await pool.query('SELECT CarID FROM car WHERE CarID = ?', [parseInt(CarID)]);
     if (!car.length)
       return res.status(404).json({ success: false, error: 'Car not found' });
 
     await pool.query(
-      `INSERT INTO Maintenance (CarID, MaintenanceID, ServiceShop, Description, Cost, CompletionDate)
+      `INSERT INTO maintenance (CarID, MaintenanceID, ServiceShop, Description, Cost, CompletionDate)
        VALUES (?, ?, ?, ?, ?, ?)`,
       [
         parseInt(CarID),
@@ -65,7 +65,7 @@ const createMaintenance = async (req, res) => {
     );
 
     const [record] = await pool.query(
-      `SELECT m.*, c.Brand, c.Model FROM Maintenance m LEFT JOIN Car c ON m.CarID = c.CarID
+      `SELECT m.*, c.Brand, c.Model FROM maintenance m LEFT JOIN car c ON m.CarID = c.CarID
        WHERE m.CarID = ? AND m.MaintenanceID = ?`,
       [parseInt(CarID), parseInt(MaintenanceID)]
     );
@@ -93,9 +93,9 @@ const updateMaintenance = async (req, res) => {
       return res.status(400).json({ success: false, error: 'No fields to update' });
 
     params.push(carId, maintenanceId);
-    await pool.query(`UPDATE Maintenance SET ${sets.join(', ')} WHERE CarID = ? AND MaintenanceID = ?`, params);
+    await pool.query(`UPDATE maintenance SET ${sets.join(', ')} WHERE CarID = ? AND MaintenanceID = ?`, params);
     const [record] = await pool.query(
-      `SELECT m.*, c.Brand, c.Model FROM Maintenance m LEFT JOIN Car c ON m.CarID = c.CarID
+      `SELECT m.*, c.Brand, c.Model FROM maintenance m LEFT JOIN car c ON m.CarID = c.CarID
        WHERE m.CarID = ? AND m.MaintenanceID = ?`,
       [carId, maintenanceId]
     );
@@ -110,7 +110,7 @@ const deleteMaintenance = async (req, res) => {
   try {
     const { carId, maintenanceId } = req.params;
     const [result] = await pool.query(
-      'DELETE FROM Maintenance WHERE CarID = ? AND MaintenanceID = ?',
+      'DELETE FROM maintenance WHERE CarID = ? AND MaintenanceID = ?',
       [carId, maintenanceId]
     );
     if (result.affectedRows === 0)

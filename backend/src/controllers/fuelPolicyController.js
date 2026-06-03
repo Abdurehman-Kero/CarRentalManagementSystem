@@ -6,8 +6,8 @@ const getAllFuelPolicies = async (req, res) => {
   try {
     const [policies] = await pool.query(
       `SELECT fp.*, COUNT(c.CarID) AS CarCount
-       FROM FuelPolicy fp
-       LEFT JOIN Car c ON fp.PolicyID = c.PolicyID
+       FROM fuelpolicy fp
+       LEFT JOIN car c ON fp.PolicyID = c.PolicyID
        GROUP BY fp.PolicyID
        ORDER BY fp.PolicyID ASC`
     );
@@ -20,7 +20,7 @@ const getAllFuelPolicies = async (req, res) => {
 // ── Get fuel policy by ID ─────────────────────────────────────────
 const getFuelPolicyById = async (req, res) => {
   try {
-    const [rows] = await pool.query('SELECT * FROM FuelPolicy WHERE PolicyID = ?', [req.params.id]);
+    const [rows] = await pool.query('SELECT * FROM fuelpolicy WHERE PolicyID = ?', [req.params.id]);
     if (!rows.length)
       return res.status(404).json({ success: false, error: 'Fuel policy not found' });
     res.json({ success: true, data: rows[0] });
@@ -37,11 +37,11 @@ const createFuelPolicy = async (req, res) => {
       return res.status(400).json({ success: false, error: 'PolicyID and Description are required' });
 
     await pool.query(
-      `INSERT INTO FuelPolicy (PolicyID, Description, AdditionalCharge) VALUES (?, ?, ?)`,
+      `INSERT INTO fuelpolicy (PolicyID, Description, AdditionalCharge) VALUES (?, ?, ?)`,
       [parseInt(PolicyID), Description.trim(), parseFloat(AdditionalCharge || 0)]
     );
 
-    const [policy] = await pool.query('SELECT * FROM FuelPolicy WHERE PolicyID = ?', [parseInt(PolicyID)]);
+    const [policy] = await pool.query('SELECT * FROM fuelpolicy WHERE PolicyID = ?', [parseInt(PolicyID)]);
     res.status(201).json({ success: true, data: policy[0] });
   } catch (err) {
     if (err.code === 'ER_DUP_ENTRY')
@@ -64,8 +64,8 @@ const updateFuelPolicy = async (req, res) => {
       return res.status(400).json({ success: false, error: 'No fields to update' });
 
     params.push(id);
-    await pool.query(`UPDATE FuelPolicy SET ${sets.join(', ')} WHERE PolicyID = ?`, params);
-    const [policy] = await pool.query('SELECT * FROM FuelPolicy WHERE PolicyID = ?', [id]);
+    await pool.query(`UPDATE fuelpolicy SET ${sets.join(', ')} WHERE PolicyID = ?`, params);
+    const [policy] = await pool.query('SELECT * FROM fuelpolicy WHERE PolicyID = ?', [id]);
     res.json({ success: true, data: policy[0] });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -75,7 +75,7 @@ const updateFuelPolicy = async (req, res) => {
 // ── Delete fuel policy ────────────────────────────────────────────
 const deleteFuelPolicy = async (req, res) => {
   try {
-    const [result] = await pool.query('DELETE FROM FuelPolicy WHERE PolicyID = ?', [req.params.id]);
+    const [result] = await pool.query('DELETE FROM fuelpolicy WHERE PolicyID = ?', [req.params.id]);
     if (result.affectedRows === 0)
       return res.status(404).json({ success: false, error: 'Fuel policy not found' });
     res.json({ success: true, message: 'Fuel policy deleted successfully' });

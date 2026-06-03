@@ -43,7 +43,7 @@ async function seed() {
 
     // Check if super admin already exists
     const [rows] = await conn.query(
-      'SELECT AdminID FROM `Admin` WHERE Email = ?',
+      'SELECT AdminID FROM `admin` WHERE Email = ?',
       [SUPER_ADMIN.Email]
     );
 
@@ -51,14 +51,14 @@ async function seed() {
       console.log(`ℹ️  Super admin already exists (${SUPER_ADMIN.Email}). Updating password…`);
       const hashed = await bcrypt.hash(SUPER_ADMIN.Password, 12);
       await conn.query(
-        'UPDATE `Admin` SET Password = ?, Role = ?, FullName = ? WHERE Email = ?',
+        'UPDATE `admin` SET Password = ?, Role = ?, FullName = ? WHERE Email = ?',
         [hashed, SUPER_ADMIN.Role, SUPER_ADMIN.FullName, SUPER_ADMIN.Email]
       );
       console.log('✅ Super admin password updated!');
     } else {
       const hashed = await bcrypt.hash(SUPER_ADMIN.Password, 12);
       await conn.query(
-        'INSERT INTO `Admin` (FullName, Email, Password, Role) VALUES (?, ?, ?, ?)',
+        'INSERT INTO `admin` (FullName, Email, Password, Role) VALUES (?, ?, ?, ?)',
         [SUPER_ADMIN.FullName, SUPER_ADMIN.Email, hashed, SUPER_ADMIN.Role]
       );
       console.log(`✅ Super admin created: ${SUPER_ADMIN.Email} / ${SUPER_ADMIN.Password}`);

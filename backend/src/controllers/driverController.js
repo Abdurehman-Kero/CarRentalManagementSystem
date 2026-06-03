@@ -6,8 +6,8 @@ const getAllDrivers = async (req, res) => {
   try {
     const [drivers] = await pool.query(
       `SELECT d.*, COUNT(bd.BookingID) AS BookingCount
-       FROM Driver d
-       LEFT JOIN BookingDriver bd ON d.DriverID = bd.DriverID
+       FROM driver d
+       LEFT JOIN bookingdriver bd ON d.DriverID = bd.DriverID
        GROUP BY d.DriverID
        ORDER BY d.DriverID ASC`
     );
@@ -20,7 +20,7 @@ const getAllDrivers = async (req, res) => {
 // ── Get driver by ID ──────────────────────────────────────────────
 const getDriverById = async (req, res) => {
   try {
-    const [rows] = await pool.query('SELECT * FROM Driver WHERE DriverID = ?', [req.params.id]);
+    const [rows] = await pool.query('SELECT * FROM driver WHERE DriverID = ?', [req.params.id]);
     if (!rows.length)
       return res.status(404).json({ success: false, error: 'Driver not found' });
 
@@ -28,10 +28,10 @@ const getDriverById = async (req, res) => {
     const [bookings] = await pool.query(
       `SELECT b.BookingID, b.PickupDate, b.ReturnDate, b.Status,
               c.FullName AS CustomerName, ca.Brand, ca.Model
-       FROM BookingDriver bd
-       JOIN Booking b ON bd.BookingID = b.BookingID
-       JOIN Customer c ON b.CustID = c.CustID
-       JOIN Car ca ON b.CarID = ca.CarID
+       FROM bookingdriver bd
+       JOIN booking b ON bd.BookingID = b.BookingID
+       JOIN customer c ON b.CustID = c.CustID
+       JOIN car ca ON b.CarID = ca.CarID
        WHERE bd.DriverID = ?
        ORDER BY b.PickupDate DESC`, [req.params.id]
     );
@@ -50,11 +50,11 @@ const createDriver = async (req, res) => {
       return res.status(400).json({ success: false, error: 'All fields are required' });
 
     await pool.query(
-      `INSERT INTO Driver (DriverID, FullName, LicenseNumber, Phone) VALUES (?, ?, ?, ?)`,
+      `INSERT INTO driver (DriverID, FullName, LicenseNumber, Phone) VALUES (?, ?, ?, ?)`,
       [parseInt(DriverID), FullName.trim(), LicenseNumber.trim(), Phone.trim()]
     );
 
-    const [driver] = await pool.query('SELECT * FROM Driver WHERE DriverID = ?', [parseInt(DriverID)]);
+    const [driver] = await pool.query('SELECT * FROM driver WHERE DriverID = ?', [parseInt(DriverID)]);
     res.status(201).json({ success: true, data: driver[0] });
   } catch (err) {
     if (err.code === 'ER_DUP_ENTRY')
@@ -78,8 +78,8 @@ const updateDriver = async (req, res) => {
       return res.status(400).json({ success: false, error: 'No fields to update' });
 
     params.push(id);
-    await pool.query(`UPDATE Driver SET ${sets.join(', ')} WHERE DriverID = ?`, params);
-    const [driver] = await pool.query('SELECT * FROM Driver WHERE DriverID = ?', [id]);
+    await pool.query(`UPDATE driver SET ${sets.join(', ')} WHERE DriverID = ?`, params);
+    const [driver] = await pool.query('SELECT * FROM driver WHERE DriverID = ?', [id]);
     res.json({ success: true, data: driver[0] });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -89,7 +89,7 @@ const updateDriver = async (req, res) => {
 // ── Delete driver ─────────────────────────────────────────────────
 const deleteDriver = async (req, res) => {
   try {
-    const [result] = await pool.query('DELETE FROM Driver WHERE DriverID = ?', [req.params.id]);
+    const [result] = await pool.query('DELETE FROM driver WHERE DriverID = ?', [req.params.id]);
     if (result.affectedRows === 0)
       return res.status(404).json({ success: false, error: 'Driver not found' });
     res.json({ success: true, message: 'Driver deleted successfully' });
