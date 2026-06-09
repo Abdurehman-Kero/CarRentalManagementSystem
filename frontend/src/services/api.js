@@ -93,8 +93,12 @@ api.interceptors.response.use(
       errorMessage = error.message || 'Request configuration error';
     }
     
-    // Show error toast notification, but skip for login errors so we can handle them inline
-    if (!error.config?.url?.includes('/auth/login')) {
+    // Determine which URLs should be silent (no toast shown)
+    const silentUrls = ['/auth/login', '/auth/me'];
+    const isSilent = silentUrls.some(u => error.config?.url?.includes(u));
+    
+    // Show error toast only for non-silent routes
+    if (!isSilent) {
       toast.error(errorMessage);
     }
     
