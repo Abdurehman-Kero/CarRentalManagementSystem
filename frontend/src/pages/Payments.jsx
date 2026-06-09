@@ -6,7 +6,7 @@ import ConfirmModal from '../components/ConfirmModal';
 
 /* ── Helpers ──────────────────────────────────────────────────────── */
 const Spinner = () => (
-  <div className="flex flex-col items-center justify-center py-32 gap-4 animate-fade-in">
+  <div className="flex flex-col items-center justify-center w-full h-full min-h-[60vh] gap-4 animate-fade-in">
     <div className="relative flex items-center justify-center">
       <div className="absolute w-12 h-12 rounded-full border border-primary-500/10 animate-ping opacity-25" />
       <svg className="w-10 h-10 animate-spin text-primary-500" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
