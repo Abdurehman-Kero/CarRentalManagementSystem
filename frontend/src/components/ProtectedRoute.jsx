@@ -8,7 +8,7 @@ const ProtectedRoute = ({ children }) => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-surface-950">
+      <div className="flex items-center justify-center min-h-screen w-full bg-surface-950">
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 rounded-2xl flex items-center justify-center"
             style={{ background: 'linear-gradient(135deg,#FFEAA7,#C39348)', boxShadow: '0 4px 20px rgba(195,147,72,0.3)' }}>
